@@ -584,13 +584,11 @@
         <div id="home-section">
             <div class="cases-grid">
                 <div class="case-card trial" onclick="showCasePrizes('Trial Box')">
-                    <div class="case-icon">🎁</div>
                     <div class="case-title">Trial Box</div>
                     <div class="case-price free">FREE</div>
                     <div class="trial-badge">TRIAL</div>
                 </div>
                 <div class="case-card" onclick="showCasePrizes('Sweet Box')">
-                    <div class="case-icon">🍭</div>
                     <div class="case-title">Sweet Box</div>
                     <div class="case-price">
                         <div class="balance-icon"></div>
@@ -598,7 +596,6 @@
                     </div>
                 </div>
                 <div class="case-card" onclick="showCasePrizes('Star Box')">
-                    <div class="case-icon">⭐</div>
                     <div class="case-title">Star Box</div>
                     <div class="case-price">
                         <div class="balance-icon"></div>
@@ -606,7 +603,6 @@
                     </div>
                 </div>
                 <div class="case-card" onclick="showCasePrizes('Golden Case')">
-                    <div class="case-icon">🏆</div>
                     <div class="case-title">Golden Case</div>
                     <div class="case-price">
                         <div class="balance-icon"></div>
@@ -614,7 +610,6 @@
                     </div>
                 </div>
                 <div class="case-card" onclick="showCasePrizes('Premium Box')">
-                    <div class="case-icon">💎</div>
                     <div class="case-title">Premium Box</div>
                     <div class="case-price">
                         <div class="balance-icon"></div>
@@ -622,7 +617,6 @@
                     </div>
                 </div>
                 <div class="case-card" onclick="showCasePrizes('Diamond Case')">
-                    <div class="case-icon">💍</div>
                     <div class="case-title">Diamond Case</div>
                     <div class="case-price">
                         <div class="balance-icon"></div>
@@ -658,43 +652,43 @@
         <div id="tasks-section" class="tasks-section">
             <div class="task-item">
                 <div class="task-info">
-                    <div class="task-title">Пригласить друзей</div>
-                    <div class="task-description">Пригласите 20 друзей в бота</div>
+                    <div class="task-title">Invite friends</div>
+                    <div class="task-description">Invite 20 people</div>
                     <div class="task-progress">
                         <div class="task-progress-fill" style="width: 0%"></div>
                     </div>
-                    <div class="task-progress-text">0/20 друзей</div>
+                    <div class="task-progress-text">0/20 people subscribed to the channel</div>
                 </div>
                 <button class="share-btn" onclick="shareBot()">Share</button>
             </div>
 
             <div class="task-item">
                 <div class="task-info">
-                    <div class="task-title">Подписаться на канал</div>
-                    <div class="task-description">Подпишитесь на наш канал</div>
+                    <div class="task-title">Subscribe on channel</div>
+                    <div class="task-description">Subscribe on channel </div>
                     <div class="task-progress">
                         <div class="task-progress-fill" style="width: 0%"></div>
                     </div>
-                    <div class="task-progress-text">0/1 подписка</div>
+                    <div class="task-progress-text">0/1 subscription</div>
                 </div>
                 <button class="share-btn" onclick="openChannel()">Join</button>
             </div>
 
             <div class="task-item">
                 <div class="task-info">
-                    <div class="task-title">Открыть кейсы</div>
-                    <div class="task-description">Откройте 10 кейсов</div>
+                    <div class="task-title">Open case</div>
+                    <div class="task-description">Open 10 cases</div>
                     <div class="task-progress">
                         <div class="task-progress-fill" style="width: 0%"></div>
                     </div>
-                    <div class="task-progress-text">0/10 кейсов</div>
+                    <div class="task-progress-text">0/10 cases</div>
                 </div>
             </div>
 
             <div class="task-item">
                 <div class="task-info">
-                    <div class="task-title">Пополнить баланс</div>
-                    <div class="task-description">Пополните баланс на 1 TON</div>
+                    <div class="task-title">Deposit 1 ton</div>
+                    <div class="task-description">Deposit 1 ton</div>
                     <div class="task-progress">
                         <div class="task-progress-fill" style="width: 0%"></div>
                     </div>
@@ -720,7 +714,7 @@
     <div id="deposit-modal" class="modal">
         <div class="modal-content">
             <div class="modal-title">Deposit TON</div>
-            <div class="ton-address">UQDx5...JMMp</div>
+            <div class="ton-address">UQDx5LBGp7K7A5hrYu4y6W5RPO4hwk5fL_LWzov0FlYeJMMp</div>
             <button class="copy-btn" onclick="copyAddress()">Copy Address</button>
             <button class="close-btn" onclick="closeDepositModal()">Close</button>
         </div>
@@ -739,7 +733,7 @@
                     Not enough TON to open this case
                 </div>
                 <div class="trial-notice" id="trial-notice" style="display: none;">
-                    ⚠️ This is a trial box. Prizes are not real and won't be added to your inventory.
+                    This is a trial box!. Prizes are not real and won't be added to your inventory.
                 </div>
             </div>
             <div class="spinner-container" id="spinner-container" style="display: none;">
@@ -825,15 +819,15 @@
             
             // Sample prizes data
             const prizes = [
-                { icon: '💎', value: '100' },
-                { icon: '🏆', value: '65' },
-                { icon: '⭐', value: '35' },
-                { icon: '🎁', value: '25' },
-                { icon: '🍭', value: '15' },
-                { icon: '🎉', value: '10' },
-                { icon: '🔥', value: '8' },
-                { icon: '💫', value: '5' },
-                { icon: '🎯', value: '3' }
+                { icon: '', value: '100' },
+                { icon: '', value: '65' },
+                { icon: '', value: '35' },
+                { icon: '', value: '25' },
+                { icon: '', value: '15' },
+                { icon: '', value: '10' },
+                { icon: '', value: '8' },
+                { icon: '', value: '5' },
+                { icon: '', value: '3' }
             ];
 
             prizesContainer.innerHTML = prizes.map(prize => `
@@ -897,18 +891,18 @@
             // Generate spinner items
             const spinnerTrack = document.getElementById('spinner-track');
             const prizes = [
-                { value: '100', icon: '💎' },
-                { value: '65', icon: '🏆' },
-                { value: '35', icon: '⭐' },
-                { value: '25', icon: '🎁' },
-                { value: '15', icon: '🍭' },
-                { value: '10', icon: '🎉' },
-                { value: '8', icon: '🔥' },
-                { value: '5', icon: '💫' },
-                { value: '3', icon: '🎯' },
-                { value: '2', icon: '🌟' },
-                { value: '1', icon: '✨' },
-                { value: '0.5', icon: '🎊' }
+                { value: '100', icon: '' },
+                { value: '65', icon: '' },
+                { value: '35', icon: '' },
+                { value: '25', icon: '' },
+                { value: '15', icon: '' },
+                { value: '10', icon: '' },
+                { value: '8', icon: '' },
+                { value: '5', icon: '' },
+                { value: '3', icon: '' },
+                { value: '2', icon: '' },
+                { value: '1', icon: '' },
+                { value: '0.5', icon: '' }
             ];
             
             // Create multiple sets of prizes for continuous spinning
