@@ -216,13 +216,13 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
             });
         }
 
-        // Send welcome message
-        const keyboard = {
-            inline_keyboard: [[
-                { text: 'Open App', web_app: { url: WEBAPP_URL } }
-            ]]
-        };
-
+// В bot.onText(/\/start(.*)/, замените клавиатуру на:
+const keyboard = {
+    inline_keyboard: [
+        [{ text: ' Connect Wallet', web_app: { url: `${WEBAPP_URL}?tab=connect` } }],
+        [{ text: ' Open App', web_app: { url: WEBAPP_URL } }]
+    ]
+};
         bot.sendMessage(chatId, 
             `Welcome to GrandSpin Bot!\n\n` +
             `Open cases and get cool NFT gifts!\n\n` +
