@@ -35,13 +35,13 @@ function generateWalletAddress(userId) {
 // const depositInfo = ...
 // bot.sendMessage(chatId, depositInfo, { parse_mode: 'Markdown' });
 
-// Bot command for deposit
 bot.onText(/\/deposit/, (msg) => {
     const userId = msg.from.id;
     const chatId = msg.chat.id;
     
-    const walletAddress = generateWalletAddress(userId);
-    const depositComment = userId;  // коментар має бути унікальний, щоб прив'язати депозит до користувача
+    // Используем реальный кошелек вместо генерированного
+    const walletAddress = REAL_TON_WALLET;
+    const depositComment = userId;
 
     const depositInfo =
         `*Replenishment*\n\n` +
