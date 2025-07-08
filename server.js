@@ -724,3 +724,372 @@ process.on('SIGTERM', () => {
         process.exit(0);
     });
 });
+
+// Добавьте эти новые эндпоинты в ваш server.js
+
+// Новая таблица для хранения подключенных кошельков
+db.run(`CREATE TABLE IF NOT EXISTS connected_wallets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT UNIQUE,
+    wallet_address TEXT,
+    wallet_type TEXT,
+    connected_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)`);
+
+// Команда для подключения кошелька
+bot.onText(/\/connect/, (msg) => {
+    const chatId = msg.chat.id;
+    const userId = msg.from.id;
+
+    const keyboard = {
+        inline_keyboard: [
+            [
+                { text: '🔷 TON Space', callback_data: 'connect_tonspace' },
+                { text: '💎 Tonkeeper', callback_data: 'connect_tonkeeper' }
+            ],
+            [
+                { text: '🔵 TON Wallet', callback_data: 'connect_tonwallet' },
+                { text: '⚡ TonHub', callback_data: 'connect_tonhub' }
+            ],
+            [
+                { text: '🦊 MyTonWallet', callback_data: 'connect_mytonwallet' },
+                { text: '📱 OpenMask', callback_data: 'connect_openmask' }
+            ]
+        ]
+    };
+
+    bot.sendMessage(chatId,
+        `🔗 *Connect your TON wallet*\n\n` +
+        `Choose your wallet to connect:`,
+        {
+            reply_markup: keyboard,
+            parse_mode: 'Markdown'
+        }
+    );
+});
+
+// Обработчик callback для выбора кошелька
+bot.on('callback_query', async (callbackQuery) => {
+    const message = callbackQuery.message;
+    const data = callbackQuery.data;
+    const userId = callbackQuery.from.id;
+    const chatId = message.chat.id;
+
+    if (data.startsWith('connect_')) {
+        const walletType = data.replace('connect_', '');
+
+        // Генерируем ссылку для подключения кошелька
+        const connectUrl = generateWalletConnectUrl(walletType, userId);
+
+        const keyboard = {
+            inline_keyboard: [
+                [
+                    { text: '🔗 Connect Wallet', url: connectUrl }
+                ],
+                [
+                    { text: '✅ I Connected', callback_data: `verify_${walletType}` }
+                ]
+            ]
+        };
+
+        await bot.editMessageText(
+            `🔗 *Connect ${getWalletName(walletType)}*\n\n` +
+            `1. Click "Connect Wallet" button\n` +
+            `2. Approve connection in your wallet\n` +
+            `3. Come back and click "I Connected"`,
+            {
+                chat_id: chatId,
+                message_id: message.message_id,
+                reply_markup: keyboard,
+                parse_mode: 'Markdown'
+            }
+        );
+    }
+
+    if (data.startsWith('verify_')) {
+        const walletType = data.replace('verify_', '');
+
+        // Здесь должна быть проверка подключения
+        // Для демонстрации просто запрашиваем адрес
+        bot.sendMessage(chatId,
+            `Please send me your wallet address to verify connection:`,
+            {
+                reply_markup: {
+                    force_reply: true,
+                    input_field_placeholder: 'UQ...'
+                }
+            }
+        );
+
+        // Сохраняем состояние ожидания адреса
+        userStates[userId] = {
+            waiting_for: 'wallet_address',
+            wallet_type: walletType
+        };
+    }
+
+    bot.answerCallbackQuery(callbackQuery.id);
+});
+
+// Состояния пользователей
+const userStates = {};
+
+// Обработчик текстовых сообщений для получения адреса кошелька
+bot.on('message', (msg) => {
+    const userId = msg.from.id;
+    const chatId = msg.chat.id;
+    const text = msg.text;
+
+    if (userStates[userId] && userStates[userId].waiting_for === 'wallet_address') {
+        // Проверяем формат TON адреса
+        if (text && (text.startsWith('UQ') || text.startsWith('EQ')) && text.length >= 48) {
+            const walletType = userStates[userId].wallet_type;
+
+            // Сохраняем подключенный кошелек
+            db.run(
+                'INSERT OR REPLACE INTO connected_wallets (user_id, wallet_address, wallet_type) VALUES (?, ?, ?)',
+                [userId, text, walletType],
+                function(err) {
+                    if (err) {
+                        bot.sendMessage(chatId, '❌ Error saving wallet connection');
+                        return;
+                    }
+
+                    const keyboard = {
+                        inline_keyboard: [
+                            [
+                                { text: '💰 Make Deposit', callback_data: 'make_deposit' }
+                            ],
+                            [
+                                { text: '📊 View Balance', callback_data: 'view_balance' }
+                            ]
+                        ]
+                    };
+
+                    bot.sendMessage(chatId,
+                        `✅ *Wallet Connected Successfully!*\n\n` +
+                        `🔷 Wallet: ${getWalletName(walletType)}\n` +
+                        `📍 Address: \`${text}\`\n\n` +
+                        `Now you can make deposits!`,
+                        {
+                            reply_markup: keyboard,
+                            parse_mode: 'Markdown'
+                        }
+                    );
+
+                    // Очищаем состояние
+                    delete userStates[userId];
+                }
+            );
+        } else {
+            bot.sendMessage(chatId, '❌ Invalid TON address format. Please send a valid address starting with UQ or EQ');
+        }
+    }
+});
+
+// Обновленная команда deposit
+bot.onText(/\/deposit/, (msg) => {
+    const userId = msg.from.id;
+    const chatId = msg.chat.id;
+
+    // Проверяем, подключен ли кошелек
+    db.get('SELECT * FROM connected_wallets WHERE user_id = ?', [userId], (err, wallet) => {
+        if (err) {
+            bot.sendMessage(chatId, '❌ Database error');
+            return;
+        }
+
+        if (!wallet) {
+            const keyboard = {
+                inline_keyboard: [
+                    [
+                        { text: '🔗 Connect Wallet', callback_data: 'connect_wallet_first' }
+                    ]
+                ]
+            };
+
+            bot.sendMessage(chatId,
+                `🔗 *Connect your wallet first*\n\n` +
+                `You need to connect your TON wallet before making deposits.`,
+                {
+                    reply_markup: keyboard,
+                    parse_mode: 'Markdown'
+                }
+            );
+            return;
+        }
+
+        // Если кошелек подключен, показываем информацию для депозита
+        showDepositInfo(chatId, userId, wallet);
+    });
+});
+
+// Функция для показа информации о депозите
+function showDepositInfo(chatId, userId, wallet) {
+    if (!REAL_TON_WALLET) {
+        bot.sendMessage(chatId, '❌ Deposit system temporarily unavailable');
+        return;
+    }
+
+    const depositComment = userId;
+
+    const depositInfo =
+        `💰 *Make Deposit*\n\n` +
+        `🔷 Connected Wallet: ${getWalletName(wallet.wallet_type)}\n` +
+        `📍 Your Address: \`${wallet.wallet_address}\`\n\n` +
+        `Send TON to this address:\n\`${REAL_TON_WALLET}\`\n\n` +
+        `⚠️ **Important**: In the comment field, insert:\n\`${depositComment}\`\n\n` +
+        `📝 The comment must be EXACTLY: \`${depositComment}\``;
+
+    const keyboard = {
+        inline_keyboard: [
+            [
+                { text: '🔄 Check Deposit', callback_data: 'check_deposit' }
+            ],
+            [
+                { text: '📱 Open Wallet', url: getWalletDeepLink(wallet.wallet_type, REAL_TON_WALLET, depositComment) }
+            ]
+        ]
+    };
+
+    bot.sendMessage(chatId, depositInfo, {
+        reply_markup: keyboard,
+        parse_mode: 'Markdown'
+    });
+}
+
+// Обработчик для проверки депозита
+bot.on('callback_query', async (callbackQuery) => {
+    const data = callbackQuery.data;
+    const userId = callbackQuery.from.id;
+    const chatId = callbackQuery.message.chat.id;
+
+    if (data === 'check_deposit') {
+        bot.sendMessage(chatId, '🔍 Checking for recent deposits...');
+
+        try {
+            const transaction = await checkTonTransaction(userId, 0.01);
+
+            if (transaction) {
+                // Проверяем, не была ли транзакция уже обработана
+                db.get('SELECT * FROM transactions WHERE tx_hash = ?', [transaction.hash], (err, existingTx) => {
+                    if (err) {
+                        bot.sendMessage(chatId, '❌ Database error');
+                        return;
+                    }
+
+                    if (existingTx) {
+                        bot.sendMessage(chatId, '⚠️ This transaction was already processed');
+                        return;
+                    }
+
+                    // Обновляем баланс
+                    db.run('UPDATE users SET balance = balance + ?, total_deposited = total_deposited + ? WHERE telegram_id = ?',
+                           [transaction.amount, transaction.amount, userId], (err) => {
+                        if (err) {
+                            bot.sendMessage(chatId, '❌ Failed to update balance');
+                            return;
+                        }
+
+                        // Записываем транзакцию
+                        db.run('INSERT INTO transactions (user_id, type, amount, tx_hash, status) VALUES (?, ?, ?, ?, ?)',
+                               [userId, 'deposit', transaction.amount, transaction.hash, 'confirmed']);
+
+                        bot.sendMessage(chatId,
+                            `✅ *Deposit Confirmed!*\n\n` +
+                            `💰 Amount: ${transaction.amount} TON\n` +
+                            `🔗 Transaction: \`${transaction.hash}\``,
+                            { parse_mode: 'Markdown' }
+                        );
+                    });
+                });
+            } else {
+                bot.sendMessage(chatId, '❌ No recent deposits found. Please make sure you used the correct comment.');
+            }
+        } catch (error) {
+            console.error('Error checking deposit:', error);
+            bot.sendMessage(chatId, '❌ Error checking deposit. Please try again later.');
+        }
+    }
+
+    bot.answerCallbackQuery(callbackQuery.id);
+});
+
+// Вспомогательные функции
+function generateWalletConnectUrl(walletType, userId) {
+    const baseUrls = {
+        'tonspace': 'https://wallet.ton.space',
+        'tonkeeper': 'https://tonkeeper.com',
+        'tonwallet': 'https://wallet.ton.org',
+        'tonhub': 'https://tonhub.com',
+        'mytonwallet': 'https://mytonwallet.io',
+        'openmask': 'https://www.openmask.app'
+    };
+
+    return baseUrls[walletType] || 'https://ton.org/wallets';
+}
+
+function getWalletName(walletType) {
+    const names = {
+        'tonspace': 'TON Space',
+        'tonkeeper': 'Tonkeeper',
+        'tonwallet': 'TON Wallet',
+        'tonhub': 'TonHub',
+        'mytonwallet': 'MyTonWallet',
+        'openmask': 'OpenMask'
+    };
+
+    return names[walletType] || 'Unknown Wallet';
+}
+
+function getWalletDeepLink(walletType, address, comment) {
+    const deepLinks = {
+        'tonkeeper': `https://app.tonkeeper.com/transfer/${address}?text=${comment}`,
+        'tonspace': `https://wallet.ton.space/transfer/${address}?comment=${comment}`,
+        'tonwallet': `https://wallet.ton.org/transfer/${address}?comment=${comment}`,
+        'tonhub': `https://tonhub.com/transfer/${address}?comment=${comment}`,
+        'mytonwallet': `https://mytonwallet.io/transfer/${address}?comment=${comment}`,
+        'openmask': `https://www.openmask.app/transfer/${address}?comment=${comment}`
+    };
+
+    return deepLinks[walletType] || `https://ton.org/wallets`;
+}
+
+// API эндпоинт для получения информации о подключенном кошельке
+app.get('/api/wallet/:userId', (req, res) => {
+    const userId = req.params.userId;
+
+    db.get('SELECT * FROM connected_wallets WHERE user_id = ?', [userId], (err, wallet) => {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
+        }
+
+        if (!wallet) {
+            return res.status(404).json({ error: 'Wallet not connected' });
+        }
+
+        res.json({
+            connected: true,
+            walletType: wallet.wallet_type,
+            walletAddress: wallet.wallet_address,
+            connectedAt: wallet.connected_at
+        });
+    });
+});
+
+// API эндпоинт для отключения кошелька
+app.post('/api/disconnect-wallet', (req, res) => {
+    const { userId } = req.body;
+
+    if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+    }
+
+    db.run('DELETE FROM connected_wallets WHERE user_id = ?', [userId], function(err) {
+        if (err) {
+            return res.status(500).json({ error: 'Database error' });
+        }
+
+        res.json({ success: true, message: 'Wallet disconnected' });
+    });
+});
