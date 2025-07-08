@@ -14,7 +14,7 @@ const WEBAPP_URL = process.env.WEBAPP_URL || 'https://ioioning.github.io/spingam
 const TON_API_KEY = process.env.TON_API_KEY;
 const CHANNEL_ID = process.env.CHANNEL_ID || '@openingcases';
 const PORT = process.env.PORT || 3000;
-const REAL_TON_WALLET = process.env.REAL_TON_WALLET;
+const REAL_TON_WALLET = process.env.TON_WALLET_ADDRESS;
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 const app = express();
