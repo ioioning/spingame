@@ -1,4 +1,4 @@
-// server.js - Updated version with all necessary fixes
+// server.js - Fixed version
 
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
@@ -14,6 +14,7 @@ const WEBAPP_URL = process.env.WEBAPP_URL || 'https://ioioning.github.io/spingam
 const TON_API_KEY = process.env.TON_API_KEY;
 const CHANNEL_ID = process.env.CHANNEL_ID || '@openingcases';
 const PORT = process.env.PORT || 3000;
+const REAL_TON_WALLET = process.env.REAL_TON_WALLET;
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 const app = express();
@@ -22,6 +23,34 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
+
+// Generate unique wallet address for user
+function generateWalletAddress(userId) {
+    const hash = crypto.createHash('sha256').update(userId + 'grandspin_salt').digest('hex');
+    return 'UQ' + hash.substring(0, 46);
+}
+
+// Remove the problematic code blocks that were causing the error
+// These lines were using undefined variables:
+// const depositInfo = ...
+// bot.sendMessage(chatId, depositInfo, { parse_mode: 'Markdown' });
+
+// Bot command for deposit
+bot.onText(/\/deposit/, (msg) => {
+    const userId = msg.from.id;
+    const chatId = msg.chat.id;
+    
+    const walletAddress = generateWalletAddress(userId);
+    const depositComment = userId;  // коментар має бути унікальний, щоб прив'язати депозит до користувача
+
+    const depositInfo =
+        `*Replenishment*\n\n` +
+        `Send TON to this address:\n\`${walletAddress}\`\n\n` +
+        `In the comment to the payment, insert:\n\`${depositComment}\`\n\n` +
+        `*Important:* The comment must be ONLY:\n\`${depositComment}\``;
+
+    bot.sendMessage(chatId, depositInfo, { parse_mode: 'Markdown' });
+});
 
 // Database initialization
 const db = new sqlite3.Database('bot.db');
@@ -91,12 +120,6 @@ db.serialize(() => {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 });
-
-// Generate unique wallet address for user
-function generateWalletAddress(userId) {
-    const hash = crypto.createHash('sha256').update(userId + 'grandspin_salt').digest('hex');
-    return 'UQ' + hash.substring(0, 46);
-}
 
 async function checkTonTransaction(userId, minAmount = 0.01) {
     try {
@@ -210,15 +233,6 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
         );
     });
 });
-const depositComment = userId; // A unique comment is a telegram_id
-const depositInfo = 
-`*Replenishment*\n\n` +
-`Send TON to this address:\n\`${process.env.MY_TON_WALLET}\`\n\n` +
-`In the comment to the payment, insert:\n\`${depositComment}\`\n\n` +
-`*Iportant:* The comment must be ONLY:\n\`${depositComment}\``;
-
-bot.sendMessage(chatId, depositInfo, { parse_mode: 'Markdown' });
-// API Routes
 
 // Get user data
 app.get('/api/user/:userId', (req, res) => {
@@ -274,7 +288,7 @@ app.post('/api/check-deposit', async (req, res) => {
                 return res.status(404).json({ error: 'User not found' });
             }
             
-            const transaction = await checkTonTransaction(user.wallet_address, amount);
+            const transaction = await checkTonTransaction(userId, amount);
             
             if (transaction) {
                 // Check if this transaction was already processed
@@ -639,7 +653,7 @@ setInterval(async () => {
         
         for (const deposit of deposits) {
             try {
-                const transaction = await checkTonTransaction(deposit.wallet_address, 0.01);
+                const transaction = await checkTonTransaction(deposit.user_id, 0.01);
                 if (transaction) {
                     // Check if transaction already processed
                     db.get('SELECT * FROM transactions WHERE tx_hash = ?', [transaction.hash], (err, existingTx) => {
@@ -684,9 +698,9 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-    console.log(` Server running on port ${PORT}`);
-    console.log(` WebApp URL: ${WEBAPP_URL}`);
-    console.log(` Bot Token: ${BOT_TOKEN ? 'Set' : 'Missing'}`);
+    console.log(`Server running on port ${PORT}`);
+    console.log(`WebApp URL: ${WEBAPP_URL}`);
+    console.log(`Bot Token: ${BOT_TOKEN ? 'Set' : 'Missing'}`);
 });
 
 // Process error handling
