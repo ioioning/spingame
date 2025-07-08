@@ -9,9 +9,9 @@ const cors = require('cors');
 require('dotenv').config();
 
 // Configuration
-const BOT_TOKEN = process.env.BOT_TOKEN || '7507829383:AAGJ0ge6WCGgyv84DywksZIFqELrBZbng3M';
+const BOT_TOKEN = process.env.BOT_TOKEN;
 const WEBAPP_URL = process.env.WEBAPP_URL || 'https://ioioning.github.io/spingame/';
-const TON_API_KEY = process.env.TON_API_KEY || 'AFPMHTH2LOT5MSQAAAAHNAC2V44UZKJSV6CBP22B5HGHIPD6WUOKNFQUR7SXMZQVPOYG3YA';
+const TON_API_KEY = process.env.TON_API_KEY;
 const CHANNEL_ID = process.env.CHANNEL_ID || '@openingcases';
 const PORT = process.env.PORT || 3000;
 
