@@ -1007,3 +1007,583 @@
     </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect TON Wallet</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .wallet-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .wallet-header {
+            margin-bottom: 30px;
+        }
+
+        .wallet-header h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .wallet-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .wallet-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .wallet-item {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .wallet-item:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .wallet-item.connecting {
+            border-color: #f39c12;
+            background: #fef9e7;
+        }
+
+        .wallet-item.connected {
+            border-color: #27ae60;
+            background: #e8f5e8;
+        }
+
+        .wallet-icon {
+            font-size: 24px;
+            margin-right: 15px;
+        }
+
+        .wallet-info {
+            flex: 1;
+            text-align: left;
+        }
+
+        .wallet-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .wallet-status {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .wallet-status.connecting {
+            color: #f39c12;
+        }
+
+        .wallet-status.connected {
+            color: #27ae60;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e0e0e0;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .connected-wallet {
+            background: #e8f5e8;
+            border: 2px solid #27ae60;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .connected-wallet h3 {
+            color: #27ae60;
+            margin-bottom: 10px;
+        }
+
+        .wallet-address {
+            font-family: monospace;
+            font-size: 12px;
+            color: #666;
+            word-break: break-all;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a6fd8;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #c3e6cb;
+        }
+
+        .deposit-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .deposit-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="wallet-container">
+        <div class="wallet-header">
+            <h1>🔗 Connect TON Wallet</h1>
+            <p>Choose your preferred TON wallet to connect</p>
+        </div>
+
+        <div id="error-message" class="error-message hidden"></div>
+        <div id="success-message" class="success-message hidden"></div>
+
+        <!-- Wallet Selection -->
+        <div id="wallet-selection" class="wallet-list">
+            <div class="wallet-item" data-wallet="tonkeeper">
+                <div class="wallet-icon">💎</div>
+                <div class="wallet-info">
+                    <div class="wallet-name">Tonkeeper</div>
+                    <div class="wallet-status">Most popular TON wallet</div>
+                </div>
+            </div>
+
+            <div class="wallet-item" data-wallet="tonhub">
+                <div class="wallet-icon">🟦</div>
+                <div class="wallet-info">
+                    <div class="wallet-name">Tonhub</div>
+                    <div class="wallet-status">Secure and fast</div>
+                </div>
+            </div>
+
+            <div class="wallet-item" data-wallet="openmask">
+                <div class="wallet-icon">🎭</div>
+                <div class="wallet-info">
+                    <div class="wallet-name">OpenMask</div>
+                    <div class="wallet-status">Browser extension</div>
+                </div>
+            </div>
+
+            <div class="wallet-item" data-wallet="mytonwallet">
+                <div class="wallet-icon">🔷</div>
+                <div class="wallet-info">
+                    <div class="wallet-name">MyTonWallet</div>
+                    <div class="wallet-status">Web-based wallet</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connected Wallet -->
+        <div id="connected-wallet" class="connected-wallet hidden">
+            <h3>✅ Wallet Connected</h3>
+            <div class="wallet-address" id="wallet-address"></div>
+            <button class="btn btn-danger" onclick="disconnectWallet()">Disconnect Wallet</button>
+        </div>
+
+        <!-- Deposit Section -->
+        <div id="deposit-section" class="deposit-section hidden">
+            <h3>💰 Make Deposit</h3>
+            <div class="deposit-form">
+                <div class="form-group">
+                    <label for="deposit-amount">Amount (TON):</label>
+                    <input type="number" id="deposit-amount" min="0.01" step="0.01" value="0.1" />
+                </div>
+                <button class="btn btn-primary" onclick="makeDeposit()">Create Deposit Transaction</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get user ID from Telegram Web App
+        const tg = window.Telegram.WebApp;
+        const userId = tg.initDataUnsafe?.user?.id;
+
+        // Base API URL
+        const API_BASE = 'https://your-server.com/api'; // Replace with your server URL
+
+        let currentSession = null;
+        let checkStatusInterval = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkExistingWallet();
+            setupWalletListeners();
+        });
+
+        // Check if user already has connected wallet
+        async function checkExistingWallet() {
+            try {
+                const response = await fetch(`${API_BASE}/user-wallet/${userId}`);
+                const data = await response.json();
+
+                if (data.hasWallet) {
+                    showConnectedWallet(data.address);
+                }
+            } catch (error) {
+                console.error('Error checking existing wallet:', error);
+            }
+        }
+
+        // Setup wallet item click listeners
+        function setupWalletListeners() {
+            document.querySelectorAll('.wallet-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const walletType = this.dataset.wallet;
+                    connectWallet(walletType);
+                });
+            });
+        }
+
+        // Connect wallet
+        async function connectWallet(walletType) {
+            try {
+                showMessage('Connecting to wallet...', 'info');
+
+                const response = await fetch(`${API_BASE}/connect-wallet`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        walletType: walletType
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentSession = data.session;
+
+                    // Update UI to show connecting state
+                    updateWalletItemState(walletType, 'connecting');
+
+                    // Open wallet app
+                    window.open(data.connectionUrl, '_blank');
+
+                    // Start checking connection status
+                    startStatusCheck();
+                } else {
+                    showMessage(data.error || 'Failed to connect wallet', 'error');
+                }
+            } catch (error) {
+                console.error('Error connecting wallet:', error);
+                showMessage('Connection failed. Please try again.', 'error');
+            }
+        }
+
+        // Update wallet item visual state
+        function updateWalletItemState(walletType, state) {
+            const item = document.querySelector(`[data-wallet="${walletType}"]`);
+            const statusEl = item.querySelector('.wallet-status');
+
+            // Reset all items
+            document.querySelectorAll('.wallet-item').forEach(el => {
+                el.classList.remove('connecting', 'connected');
+                el.querySelector('.wallet-status').classList.remove('connecting', 'connected');
+            });
+
+            if (state === 'connecting') {
+                item.classList.add('connecting');
+                statusEl.classList.add('connecting');
+                statusEl.innerHTML = 'Connecting... <div class="loading-spinner"></div>';
+            } else if (state === 'connected') {
+                item.classList.add('connected');
+                statusEl.classList.add('connected');
+                statusEl.textContent = 'Connected';
+            }
+        }
+
+        // Start checking connection status
+        function startStatusCheck() {
+            if (checkStatusInterval) {
+                clearInterval(checkStatusInterval);
+            }
+
+            checkStatusInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`${API_BASE}/wallet-status/${currentSession}`);
+                    const data = await response.json();
+
+                    if (data.status === 'connected') {
+                        clearInterval(checkStatusInterval);
+                        showConnectedWallet(data.address);
+                        showMessage('Wallet connected successfully!', 'success');
+                    } else if (response.status === 408) {
+                        // Session expired
+                        clearInterval(checkStatusInterval);
+                        showMessage('Connection timeout. Please try again.', 'error');
+                        resetWalletStates();
+                    }
+                } catch (error) {
+                    console.error('Error checking status:', error);
+                }
+            }, 2000);
+
+            // Stop checking after 5 minutes
+            setTimeout(() => {
+                if (checkStatusInterval) {
+                    clearInterval(checkStatusInterval);
+                    showMessage('Connection timeout. Please try again.', 'error');
+                    resetWalletStates();
+                }
+            }, 300000);
+        }
+
+        // Show connected wallet
+        function showConnectedWallet(address) {
+            document.getElementById('wallet-selection').classList.add('hidden');
+            document.getElementById('connected-wallet').classList.remove('hidden');
+            document.getElementById('deposit-section').classList.remove('hidden');
+            document.getElementById('wallet-address').textContent = address;
+        }
+
+        // Disconnect wallet
+        async function disconnectWallet() {
+            try {
+                const response = await fetch(`${API_BASE}/user-wallet/${userId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    document.getElementById('wallet-selection').classList.remove('hidden');
+                    document.getElementById('connected-wallet').classList.add('hidden');
+                    document.getElementById('deposit-section').classList.add('hidden');
+                    resetWalletStates();
+                    showMessage('Wallet disconnected successfully!', 'success');
+                }
+            } catch (error) {
+                console.error('Error disconnecting wallet:', error);
+                showMessage('Failed to disconnect wallet', 'error');
+            }
+        }
+
+        // Reset wallet states
+        function resetWalletStates() {
+            document.querySelectorAll('.wallet-item').forEach(item => {
+                item.classList.remove('connecting', 'connected');
+                const statusEl = item.querySelector('.wallet-status');
+                statusEl.classList.remove('connecting', 'connected');
+
+                // Reset status text based on wallet type
+                const walletType = item.dataset.wallet;
+                const statusTexts = {
+                    'tonkeeper': 'Most popular TON wallet',
+                    'tonhub': 'Secure and fast',
+                    'openmask': 'Browser extension',
+                    'mytonwallet': 'Web-based wallet'
+                };
+                statusEl.textContent = statusTexts[walletType];
+            });
+        }
+
+        // Make deposit
+        async function makeDeposit() {
+            try {
+                const amount = parseFloat(document.getElementById('deposit-amount').value);
+
+                if (amount < 0.01) {
+                    showMessage('Minimum deposit amount is 0.01 TON', 'error');
+                    return;
+                }
+
+                const response = await fetch(`${API_BASE}/wallet-deposit`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        amount: amount
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Create TON transaction
+                    const transaction = {
+                        to: data.depositData.to,
+                        amount: data.depositData.amount,
+                        payload: data.depositData.payload,
+                        validUntil: data.depositData.validUntil
+                    };
+
+                    // This would integrate with TON Connect to send transaction
+                    // For now, show success message
+                    showMessage(`Deposit transaction prepared for ${amount} TON`, 'success');
+
+                    // In real implementation, you would:
+                    // 1. Send transaction through TON Connect
+                    // 2. Wait for confirmation
+                    // 3. Update user balance
+
+                } else {
+                    showMessage(data.error || 'Failed to create deposit', 'error');
+                }
+            } catch (error) {
+                console.error('Error making deposit:', error);
+                showMessage('Failed to create deposit transaction', 'error');
+            }
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            const errorEl = document.getElementById('error-message');
+            const successEl = document.getElementById('success-message');
+
+            // Hide both messages
+            errorEl.classList.add('hidden');
+            successEl.classList.add('hidden');
+
+            if (type === 'error') {
+                errorEl.textContent = message;
+                errorEl.classList.remove('hidden');
+            } else if (type === 'success') {
+                successEl.textContent = message;
+                successEl.classList.remove('hidden');
+            }
+
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                errorEl.classList.add('hidden');
+                successEl.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (checkStatusInterval) {
+                clearInterval(checkStatusInterval);
+            }
+        });
+    </script>
+</body>
+</html>
