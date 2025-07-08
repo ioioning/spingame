@@ -724,372 +724,376 @@ process.on('SIGTERM', () => {
         process.exit(0);
     });
 });
+// TON Wallet Connection & Deposit System
+// Add this to the end of your existing code
 
-// Добавьте эти новые эндпоинты в ваш server.js
+// Wallet connection storage
+const connectedWallets = new Map();
 
-// Новая таблица для хранения подключенных кошельков
-db.run(`CREATE TABLE IF NOT EXISTS connected_wallets (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id TEXT UNIQUE,
-    wallet_address TEXT,
-    wallet_type TEXT,
-    connected_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)`);
+// Available TON wallets configuration
+const TON_WALLETS = {
+    tonkeeper: {
+        name: 'Tonkeeper',
+        icon: '💎',
+        bridgeUrl: 'https://bridge.tonapi.io/bridge',
+        universalLink: 'https://app.tonkeeper.com/ton-connect',
+        deepLink: 'tonkeeper-tc://'
+    },
+    tonhub: {
+        name: 'Tonhub',
+        icon: '🟦',
+        bridgeUrl: 'https://connect.tonhubapi.com/tonconnect',
+        universalLink: 'https://tonhub.com/ton-connect',
+        deepLink: 'tonhub-tc://'
+    },
+    openmask: {
+        name: 'OpenMask',
+        icon: '🎭',
+        bridgeUrl: 'https://tonconnect.openmask.app/bridge',
+        universalLink: 'https://www.openmask.app/ton-connect',
+        deepLink: 'openmask-tc://'
+    },
+    mytonwallet: {
+        name: 'MyTonWallet',
+        icon: '🔷',
+        bridgeUrl: 'https://tonconnect.mytonwallet.org/bridge',
+        universalLink: 'https://mytonwallet.io/ton-connect',
+        deepLink: 'mytonwallet-tc://'
+    }
+};
 
-// Команда для подключения кошелька
-bot.onText(/\/connect/, (msg) => {
-    const chatId = msg.chat.id;
-    const userId = msg.from.id;
+// Generate wallet connection session
+function generateWalletSession() {
+    return crypto.randomBytes(32).toString('hex');
+}
 
-    const keyboard = {
-        inline_keyboard: [
-            [
-                { text: '🔷 TON Space', callback_data: 'connect_tonspace' },
-                { text: '💎 Tonkeeper', callback_data: 'connect_tonkeeper' }
-            ],
-            [
-                { text: '🔵 TON Wallet', callback_data: 'connect_tonwallet' },
-                { text: '⚡ TonHub', callback_data: 'connect_tonhub' }
-            ],
-            [
-                { text: '🦊 MyTonWallet', callback_data: 'connect_mytonwallet' },
-                { text: '📱 OpenMask', callback_data: 'connect_openmask' }
-            ]
+// Create wallet connection payload
+function createWalletPayload(userId, walletType) {
+    const session = generateWalletSession();
+    const payload = {
+        manifestUrl: `${process.env.WEBAPP_URL || 'https://ioioning.github.io/spingame/'}/tonconnect-manifest.json`,
+        items: [
+            {
+                name: 'ton_addr',
+                payload: {
+                    address: true,
+                    network: 'mainnet',
+                    public_key: true
+                }
+            },
+            {
+                name: 'ton_proof',
+                payload: {
+                    timestamp: Date.now(),
+                    domain: {
+                        lengthBytes: 32,
+                        value: 'grandspin.bot'
+                    },
+                    signature: session,
+                    payload: userId
+                }
+            }
         ]
     };
+    
+    return { session, payload };
+}
 
-    bot.sendMessage(chatId,
-        `🔗 *Connect your TON wallet*\n\n` +
-        `Choose your wallet to connect:`,
-        {
-            reply_markup: keyboard,
-            parse_mode: 'Markdown'
-        }
-    );
-});
-
-// Обработчик callback для выбора кошелька
-bot.on('callback_query', async (callbackQuery) => {
-    const message = callbackQuery.message;
-    const data = callbackQuery.data;
-    const userId = callbackQuery.from.id;
-    const chatId = message.chat.id;
-
-    if (data.startsWith('connect_')) {
-        const walletType = data.replace('connect_', '');
-
-        // Генерируем ссылку для подключения кошелька
-        const connectUrl = generateWalletConnectUrl(walletType, userId);
-
-        const keyboard = {
-            inline_keyboard: [
-                [
-                    { text: '🔗 Connect Wallet', url: connectUrl }
-                ],
-                [
-                    { text: '✅ I Connected', callback_data: `verify_${walletType}` }
-                ]
-            ]
-        };
-
-        await bot.editMessageText(
-            `🔗 *Connect ${getWalletName(walletType)}*\n\n` +
-            `1. Click "Connect Wallet" button\n` +
-            `2. Approve connection in your wallet\n` +
-            `3. Come back and click "I Connected"`,
-            {
-                chat_id: chatId,
-                message_id: message.message_id,
-                reply_markup: keyboard,
-                parse_mode: 'Markdown'
+// Wallet connection endpoint
+app.post('/api/connect-wallet', async (req, res) => {
+    const { userId, walletType } = req.body;
+    
+    if (!userId || !walletType) {
+        return res.status(400).json({ error: 'Missing required parameters' });
+    }
+    
+    if (!TON_WALLETS[walletType]) {
+        return res.status(400).json({ error: 'Unsupported wallet type' });
+    }
+    
+    try {
+        const { session, payload } = createWalletPayload(userId, walletType);
+        const wallet = TON_WALLETS[walletType];
+        
+        // Store session temporarily
+        connectedWallets.set(session, {
+            userId,
+            walletType,
+            timestamp: Date.now(),
+            status: 'pending'
+        });
+        
+        // Create connection URL
+        const connectionUrl = `${wallet.universalLink}?v=2&id=${session}&r=${encodeURIComponent(JSON.stringify(payload))}`;
+        
+        res.json({
+            success: true,
+            session,
+            connectionUrl,
+            wallet: {
+                name: wallet.name,
+                icon: wallet.icon
             }
-        );
-    }
-
-    if (data.startsWith('verify_')) {
-        const walletType = data.replace('verify_', '');
-
-        // Здесь должна быть проверка подключения
-        // Для демонстрации просто запрашиваем адрес
-        bot.sendMessage(chatId,
-            `Please send me your wallet address to verify connection:`,
-            {
-                reply_markup: {
-                    force_reply: true,
-                    input_field_placeholder: 'UQ...'
-                }
-            }
-        );
-
-        // Сохраняем состояние ожидания адреса
-        userStates[userId] = {
-            waiting_for: 'wallet_address',
-            wallet_type: walletType
-        };
-    }
-
-    bot.answerCallbackQuery(callbackQuery.id);
-});
-
-// Состояния пользователей
-const userStates = {};
-
-// Обработчик текстовых сообщений для получения адреса кошелька
-bot.on('message', (msg) => {
-    const userId = msg.from.id;
-    const chatId = msg.chat.id;
-    const text = msg.text;
-
-    if (userStates[userId] && userStates[userId].waiting_for === 'wallet_address') {
-        // Проверяем формат TON адреса
-        if (text && (text.startsWith('UQ') || text.startsWith('EQ')) && text.length >= 48) {
-            const walletType = userStates[userId].wallet_type;
-
-            // Сохраняем подключенный кошелек
-            db.run(
-                'INSERT OR REPLACE INTO connected_wallets (user_id, wallet_address, wallet_type) VALUES (?, ?, ?)',
-                [userId, text, walletType],
-                function(err) {
-                    if (err) {
-                        bot.sendMessage(chatId, '❌ Error saving wallet connection');
-                        return;
-                    }
-
-                    const keyboard = {
-                        inline_keyboard: [
-                            [
-                                { text: '💰 Make Deposit', callback_data: 'make_deposit' }
-                            ],
-                            [
-                                { text: '📊 View Balance', callback_data: 'view_balance' }
-                            ]
-                        ]
-                    };
-
-                    bot.sendMessage(chatId,
-                        `✅ *Wallet Connected Successfully!*\n\n` +
-                        `🔷 Wallet: ${getWalletName(walletType)}\n` +
-                        `📍 Address: \`${text}\`\n\n` +
-                        `Now you can make deposits!`,
-                        {
-                            reply_markup: keyboard,
-                            parse_mode: 'Markdown'
-                        }
-                    );
-
-                    // Очищаем состояние
-                    delete userStates[userId];
-                }
-            );
-        } else {
-            bot.sendMessage(chatId, '❌ Invalid TON address format. Please send a valid address starting with UQ or EQ');
-        }
+        });
+        
+    } catch (error) {
+        console.error('Error creating wallet connection:', error);
+        res.status(500).json({ error: 'Failed to create wallet connection' });
     }
 });
 
-// Обновленная команда deposit
-bot.onText(/\/deposit/, (msg) => {
-    const userId = msg.from.id;
-    const chatId = msg.chat.id;
-
-    // Проверяем, подключен ли кошелек
-    db.get('SELECT * FROM connected_wallets WHERE user_id = ?', [userId], (err, wallet) => {
-        if (err) {
-            bot.sendMessage(chatId, '❌ Database error');
-            return;
-        }
-
-        if (!wallet) {
-            const keyboard = {
-                inline_keyboard: [
-                    [
-                        { text: '🔗 Connect Wallet', callback_data: 'connect_wallet_first' }
-                    ]
-                ]
-            };
-
-            bot.sendMessage(chatId,
-                `🔗 *Connect your wallet first*\n\n` +
-                `You need to connect your TON wallet before making deposits.`,
-                {
-                    reply_markup: keyboard,
-                    parse_mode: 'Markdown'
-                }
-            );
-            return;
-        }
-
-        // Если кошелек подключен, показываем информацию для депозита
-        showDepositInfo(chatId, userId, wallet);
+// Check wallet connection status
+app.get('/api/wallet-status/:session', (req, res) => {
+    const session = req.params.session;
+    const connectionInfo = connectedWallets.get(session);
+    
+    if (!connectionInfo) {
+        return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    // Check if session expired (5 minutes)
+    if (Date.now() - connectionInfo.timestamp > 300000) {
+        connectedWallets.delete(session);
+        return res.status(408).json({ error: 'Session expired' });
+    }
+    
+    res.json({
+        status: connectionInfo.status,
+        walletType: connectionInfo.walletType,
+        address: connectionInfo.address || null
     });
 });
 
-// Функция для показа информации о депозите
-function showDepositInfo(chatId, userId, wallet) {
-    if (!REAL_TON_WALLET) {
-        bot.sendMessage(chatId, '❌ Deposit system temporarily unavailable');
-        return;
+// Wallet callback endpoint (for wallet apps to confirm connection)
+app.post('/api/wallet-callback', async (req, res) => {
+    const { session, address, signature, public_key } = req.body;
+    
+    if (!session || !address) {
+        return res.status(400).json({ error: 'Missing required parameters' });
     }
-
-    const depositComment = userId;
-
-    const depositInfo =
-        `💰 *Make Deposit*\n\n` +
-        `🔷 Connected Wallet: ${getWalletName(wallet.wallet_type)}\n` +
-        `📍 Your Address: \`${wallet.wallet_address}\`\n\n` +
-        `Send TON to this address:\n\`${REAL_TON_WALLET}\`\n\n` +
-        `⚠️ **Important**: In the comment field, insert:\n\`${depositComment}\`\n\n` +
-        `📝 The comment must be EXACTLY: \`${depositComment}\``;
-
-    const keyboard = {
-        inline_keyboard: [
-            [
-                { text: '🔄 Check Deposit', callback_data: 'check_deposit' }
-            ],
-            [
-                { text: '📱 Open Wallet', url: getWalletDeepLink(wallet.wallet_type, REAL_TON_WALLET, depositComment) }
-            ]
-        ]
-    };
-
-    bot.sendMessage(chatId, depositInfo, {
-        reply_markup: keyboard,
-        parse_mode: 'Markdown'
-    });
-}
-
-// Обработчик для проверки депозита
-bot.on('callback_query', async (callbackQuery) => {
-    const data = callbackQuery.data;
-    const userId = callbackQuery.from.id;
-    const chatId = callbackQuery.message.chat.id;
-
-    if (data === 'check_deposit') {
-        bot.sendMessage(chatId, '🔍 Checking for recent deposits...');
-
-        try {
-            const transaction = await checkTonTransaction(userId, 0.01);
-
-            if (transaction) {
-                // Проверяем, не была ли транзакция уже обработана
-                db.get('SELECT * FROM transactions WHERE tx_hash = ?', [transaction.hash], (err, existingTx) => {
-                    if (err) {
-                        bot.sendMessage(chatId, '❌ Database error');
-                        return;
-                    }
-
-                    if (existingTx) {
-                        bot.sendMessage(chatId, '⚠️ This transaction was already processed');
-                        return;
-                    }
-
-                    // Обновляем баланс
-                    db.run('UPDATE users SET balance = balance + ?, total_deposited = total_deposited + ? WHERE telegram_id = ?',
-                           [transaction.amount, transaction.amount, userId], (err) => {
-                        if (err) {
-                            bot.sendMessage(chatId, '❌ Failed to update balance');
-                            return;
-                        }
-
-                        // Записываем транзакцию
-                        db.run('INSERT INTO transactions (user_id, type, amount, tx_hash, status) VALUES (?, ?, ?, ?, ?)',
-                               [userId, 'deposit', transaction.amount, transaction.hash, 'confirmed']);
-
-                        bot.sendMessage(chatId,
-                            `✅ *Deposit Confirmed!*\n\n` +
-                            `💰 Amount: ${transaction.amount} TON\n` +
-                            `🔗 Transaction: \`${transaction.hash}\``,
-                            { parse_mode: 'Markdown' }
-                        );
-                    });
-                });
-            } else {
-                bot.sendMessage(chatId, '❌ No recent deposits found. Please make sure you used the correct comment.');
-            }
-        } catch (error) {
-            console.error('Error checking deposit:', error);
-            bot.sendMessage(chatId, '❌ Error checking deposit. Please try again later.');
+    
+    const connectionInfo = connectedWallets.get(session);
+    if (!connectionInfo) {
+        return res.status(404).json({ error: 'Session not found' });
+    }
+    
+    try {
+        // Verify the address format
+        if (!address.startsWith('UQ') && !address.startsWith('EQ')) {
+            return res.status(400).json({ error: 'Invalid TON address format' });
         }
+        
+        // Update connection info
+        connectionInfo.status = 'connected';
+        connectionInfo.address = address;
+        connectionInfo.signature = signature;
+        connectionInfo.public_key = public_key;
+        
+        // Update user in database
+        db.run('UPDATE users SET wallet_address = ? WHERE telegram_id = ?', 
+               [address, connectionInfo.userId], (err) => {
+            if (err) {
+                console.error('Error updating wallet address:', err);
+                return res.status(500).json({ error: 'Database error' });
+            }
+            
+            // Notify user about successful connection
+            bot.sendMessage(connectionInfo.userId, 
+                `✅ Wallet connected successfully!\n\n` +
+                `Address: \`${address}\`\n\n` +
+                `You can now make deposits directly from your wallet.`, 
+                { parse_mode: 'Markdown' }
+            );
+            
+            res.json({ success: true, message: 'Wallet connected successfully' });
+        });
+        
+    } catch (error) {
+        console.error('Error processing wallet callback:', error);
+        res.status(500).json({ error: 'Failed to process wallet connection' });
     }
-
-    bot.answerCallbackQuery(callbackQuery.id);
 });
 
-// Вспомогательные функции
-function generateWalletConnectUrl(walletType, userId) {
-    const baseUrls = {
-        'tonspace': 'https://wallet.ton.space',
-        'tonkeeper': 'https://tonkeeper.com',
-        'tonwallet': 'https://wallet.ton.org',
-        'tonhub': 'https://tonhub.com',
-        'mytonwallet': 'https://mytonwallet.io',
-        'openmask': 'https://www.openmask.app'
-    };
+// Get available wallets
+app.get('/api/wallets', (req, res) => {
+    const wallets = Object.entries(TON_WALLETS).map(([key, wallet]) => ({
+        id: key,
+        name: wallet.name,
+        icon: wallet.icon
+    }));
+    
+    res.json(wallets);
+});
 
-    return baseUrls[walletType] || 'https://ton.org/wallets';
-}
-
-function getWalletName(walletType) {
-    const names = {
-        'tonspace': 'TON Space',
-        'tonkeeper': 'Tonkeeper',
-        'tonwallet': 'TON Wallet',
-        'tonhub': 'TonHub',
-        'mytonwallet': 'MyTonWallet',
-        'openmask': 'OpenMask'
-    };
-
-    return names[walletType] || 'Unknown Wallet';
-}
-
-function getWalletDeepLink(walletType, address, comment) {
-    const deepLinks = {
-        'tonkeeper': `https://app.tonkeeper.com/transfer/${address}?text=${comment}`,
-        'tonspace': `https://wallet.ton.space/transfer/${address}?comment=${comment}`,
-        'tonwallet': `https://wallet.ton.org/transfer/${address}?comment=${comment}`,
-        'tonhub': `https://tonhub.com/transfer/${address}?comment=${comment}`,
-        'mytonwallet': `https://mytonwallet.io/transfer/${address}?comment=${comment}`,
-        'openmask': `https://www.openmask.app/transfer/${address}?comment=${comment}`
-    };
-
-    return deepLinks[walletType] || `https://ton.org/wallets`;
-}
-
-// API эндпоинт для получения информации о подключенном кошельке
-app.get('/api/wallet/:userId', (req, res) => {
+// Check if user has connected wallet
+app.get('/api/user-wallet/:userId', (req, res) => {
     const userId = req.params.userId;
-
-    db.get('SELECT * FROM connected_wallets WHERE user_id = ?', [userId], (err, wallet) => {
+    
+    db.get('SELECT wallet_address FROM users WHERE telegram_id = ?', [userId], (err, user) => {
         if (err) {
+            console.error('Database error:', err);
             return res.status(500).json({ error: 'Database error' });
         }
-
-        if (!wallet) {
-            return res.status(404).json({ error: 'Wallet not connected' });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
         }
-
+        
+        const hasWallet = user.wallet_address && 
+                         (user.wallet_address.startsWith('UQ') || user.wallet_address.startsWith('EQ'));
+        
         res.json({
-            connected: true,
-            walletType: wallet.wallet_type,
-            walletAddress: wallet.wallet_address,
-            connectedAt: wallet.connected_at
+            hasWallet,
+            address: hasWallet ? user.wallet_address : null
         });
     });
 });
 
-// API эндпоинт для отключения кошелька
-app.post('/api/disconnect-wallet', (req, res) => {
-    const { userId } = req.body;
-
+// Enhanced deposit with wallet integration
+app.post('/api/wallet-deposit', async (req, res) => {
+    const { userId, amount = 0.01 } = req.body;
+    
     if (!userId) {
         return res.status(400).json({ error: 'User ID is required' });
     }
-
-    db.run('DELETE FROM connected_wallets WHERE user_id = ?', [userId], function(err) {
+    
+    db.get('SELECT wallet_address FROM users WHERE telegram_id = ?', [userId], (err, user) => {
         if (err) {
+            console.error('Database error:', err);
             return res.status(500).json({ error: 'Database error' });
         }
-
-        res.json({ success: true, message: 'Wallet disconnected' });
+        
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        const hasConnectedWallet = user.wallet_address && 
+                                 (user.wallet_address.startsWith('UQ') || user.wallet_address.startsWith('EQ'));
+        
+        if (!hasConnectedWallet) {
+            return res.status(400).json({ error: 'No wallet connected' });
+        }
+        
+        // Create deposit transaction data
+        const depositData = {
+            to: REAL_TON_WALLET,
+            amount: (amount * 1e9).toString(), // Convert to nanotons
+            payload: userId.toString(),
+            validUntil: Math.floor(Date.now() / 1000) + 600 // 10 minutes
+        };
+        
+        // Create pending deposit
+        db.run('INSERT INTO pending_deposits (user_id, amount, wallet_address) VALUES (?, ?, ?)',
+               [userId, amount, user.wallet_address], (err) => {
+            if (err) {
+                console.error('Error creating deposit:', err);
+                return res.status(500).json({ error: 'Failed to create deposit' });
+            }
+            
+            res.json({
+                success: true,
+                depositData,
+                message: 'Deposit transaction prepared'
+            });
+        });
     });
 });
+
+// Update bot command to include wallet connection
+bot.onText(/\/wallet/, (msg) => {
+    const userId = msg.from.id;
+    const chatId = msg.chat.id;
+    
+    db.get('SELECT wallet_address FROM users WHERE telegram_id = ?', [userId], (err, user) => {
+        if (err || !user) {
+            bot.sendMessage(chatId, 'User not found. Please use /start first.');
+            return;
+        }
+        
+        const hasConnectedWallet = user.wallet_address && 
+                                 (user.wallet_address.startsWith('UQ') || user.wallet_address.startsWith('EQ'));
+        
+        if (hasConnectedWallet) {
+            const walletInfo = 
+                `*Your Connected Wallet*\n\n` +
+                `Address: \`${user.wallet_address}\`\n\n` +
+                `You can make deposits directly from your connected wallet.`;
+            
+            const keyboard = {
+                inline_keyboard: [
+                    [{ text: '💰 Make Deposit', web_app: { url: `${WEBAPP_URL}?tab=deposit` } }],
+                    [{ text: '🔄 Disconnect Wallet', callback_data: 'disconnect_wallet' }]
+                ]
+            };
+            
+            bot.sendMessage(chatId, walletInfo, { 
+                parse_mode: 'Markdown',
+                reply_markup: keyboard
+            });
+        } else {
+            const connectInfo = 
+                `*Connect TON Wallet*\n\n` +
+                `Connect your TON wallet to make deposits easily.\n\n` +
+                `Supported wallets:\n` +
+                `💎 Tonkeeper\n` +
+                `🟦 Tonhub\n` +
+                `🎭 OpenMask\n` +
+                `🔷 MyTonWallet`;
+            
+            const keyboard = {
+                inline_keyboard: [[
+                    { text: '🔗 Connect Wallet', web_app: { url: `${WEBAPP_URL}?tab=connect` } }
+                ]]
+            };
+            
+            bot.sendMessage(chatId, connectInfo, { 
+                parse_mode: 'Markdown',
+                reply_markup: keyboard
+            });
+        }
+    });
+});
+
+// Handle wallet disconnect
+bot.on('callback_query', (query) => {
+    const chatId = query.message.chat.id;
+    const userId = query.from.id;
+    
+    if (query.data === 'disconnect_wallet') {
+        db.run('UPDATE users SET wallet_address = NULL WHERE telegram_id = ?', [userId], (err) => {
+            if (err) {
+                bot.answerCallbackQuery(query.id, 'Error disconnecting wallet');
+                return;
+            }
+            
+            bot.answerCallbackQuery(query.id, 'Wallet disconnected successfully');
+            bot.sendMessage(chatId, '✅ Wallet disconnected successfully!');
+        });
+    }
+});
+
+// Clean up expired wallet sessions (run every 5 minutes)
+setInterval(() => {
+    const fiveMinutesAgo = Date.now() - 300000;
+    
+    for (const [session, connectionInfo] of connectedWallets.entries()) {
+        if (connectionInfo.timestamp < fiveMinutesAgo) {
+            connectedWallets.delete(session);
+        }
+    }
+}, 300000);
+
+// Create TON Connect manifest file endpoint
+app.get('/tonconnect-manifest.json', (req, res) => {
+    const manifest = {
+        url: process.env.WEBAPP_URL || 'https://ioioning.github.io/spingame/',
+        name: 'GrandSpin Bot',
+        iconUrl: `${process.env.WEBAPP_URL || 'https://ioioning.github.io/spingame/'}/icon.png`,
+        termsOfUseUrl: `${process.env.WEBAPP_URL || 'https://ioioning.github.io/spingame/'}/terms`,
+        privacyPolicyUrl: `${process.env.WEBAPP_URL || 'https://ioioning.github.io/spingame/'}/privacy`
+    };
+    
+    res.json(manifest);
+});
+
+console.log('TON Wallet connection system initialized');
