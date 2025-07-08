@@ -186,7 +186,7 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
                             db.run('INSERT INTO transactions (user_id, type, amount, status) VALUES (?, ?, ?, ?)',
                                    [referralCode, 'referral_bonus', 0.1, 'confirmed']);
                             
-                            bot.sendMessage(referralCode, '🎉 You received 0.1 TON for inviting a friend!');
+                            bot.sendMessage(referralCode, 'You received 0.1 TON for inviting a friend!');
                         }
                     });
                 }
@@ -196,21 +196,28 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
         // Send welcome message
         const keyboard = {
             inline_keyboard: [[
-                { text: '🎮 Open App', web_app: { url: WEBAPP_URL } }
+                { text: 'Open App', web_app: { url: WEBAPP_URL } }
             ]]
         };
 
         bot.sendMessage(chatId, 
-            `🎰 Welcome to GrandSpin Bot!\n\n` +
-            `🎁 Open cases and get cool NFT gifts!\n\n` +
-            `✨ Free trial case available\n` +
-            `📋 Complete tasks and get bonuses\n` +
-            `👥 Invite friends and earn TON`,
+            `Welcome to GrandSpin Bot!\n\n` +
+            `Open cases and get cool NFT gifts!\n\n` +
+            `Free trial case available\n` +
+            `Complete tasks and get bonuses\n` +
+            `Invite friends and earn TON`,
             { reply_markup: keyboard }
         );
     });
 });
+const depositComment = userId; // A unique comment is a telegram_id
+const depositInfo = 
+`*Replenishment*\n\n` +
+`Send TON to this address:\n\`${process.env.MY_TON_WALLET}\`\n\n` +
+`In the comment to the payment, insert:\n\`${depositComment}\`\n\n` +
+`*Iportant:* The comment must be ONLY:\n\`${depositComment}\``;
 
+bot.sendMessage(chatId, depositInfo, { parse_mode: 'Markdown' });
 // API Routes
 
 // Get user data
