@@ -98,39 +98,35 @@ function generateWalletAddress(userId) {
     return 'UQ' + hash.substring(0, 46);
 }
 
-// Check TON transaction with improved logic
-async function checkTonTransaction(address, minAmount) {
+async function checkTonTransaction(userId, minAmount = 0.01) {
     try {
-        const response = await axios.get(`https://tonapi.io/v2/accounts/${address}/transactions`, {
-            headers: {
-                'Authorization': `Bearer ${TON_API_KEY}`
-            },
-            params: {
-                limit: 10
-            }
+        const response = await axios.get(`https://tonapi.io/v2/accounts/${REAL_TON_WALLET}/transactions`, {
+            headers: { 'Authorization': `Bearer ${TON_API_KEY}` },
+            params: { limit: 10 }
         });
-        
+
         const transactions = response.data.transactions;
         const oneHourAgo = Date.now() - 3600000;
-        
+
         for (const tx of transactions) {
-            if (tx.in_msg && tx.in_msg.value) {
-                const amount = parseInt(tx.in_msg.value) / 1000000000; // Convert nanoTON to TON
+            if (tx.in_msg && tx.in_msg.value && tx.in_msg.comment) {
+                const amount = parseInt(tx.in_msg.value) / 1e9;
                 const txTime = tx.utime * 1000;
-                
-                if (amount >= minAmount && txTime > oneHourAgo) {
+                const comment = tx.in_msg.comment.trim();
+
+                if (comment === userId.toString() && amount >= minAmount && txTime > oneHourAgo) {
                     return {
                         hash: tx.hash,
-                        amount: amount,
+                        amount,
                         time: txTime
                     };
                 }
             }
         }
-        
+
         return null;
     } catch (error) {
-        console.error('Error checking TON transaction:', error.message);
+        console.error('TON check error:', error.message);
         return null;
     }
 }
