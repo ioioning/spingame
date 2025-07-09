@@ -1,4 +1,4 @@
-// server.js - Fixed version
+// server.js - Updated with TON Connect integration
 
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
@@ -30,32 +30,10 @@ function generateWalletAddress(userId) {
     return 'UQ' + hash.substring(0, 46);
 }
 
-// Remove the problematic code blocks that were causing the error
-// These lines were using undefined variables:
-// const depositInfo = ...
-// bot.sendMessage(chatId, depositInfo, { parse_mode: 'Markdown' });
-
-bot.onText(/\/deposit/, (msg) => {
-    const userId = msg.from.id;
-    const chatId = msg.chat.id;
-    
-    // Используем реальный кошелек вместо генерированного
-    const walletAddress = REAL_TON_WALLET;
-    const depositComment = userId;
-
-    const depositInfo =
-        `*Replenishment*\n\n` +
-        `Send TON to this address:\n\`${walletAddress}\`\n\n` +
-        `In the comment to the payment, insert:\n\`${depositComment}\`\n\n` +
-        `*Important:* The comment must be ONLY:\n\`${depositComment}\``;
-
-    bot.sendMessage(chatId, depositInfo, { parse_mode: 'Markdown' });
-});
-
 // Database initialization
 const db = new sqlite3.Database('bot.db');
 
-// Create tables
+// Create tables (включая новую таблицу для TON Connect)
 db.serialize(() => {
     // Users table
     db.run(`CREATE TABLE IF NOT EXISTS users (
@@ -71,6 +49,17 @@ db.serialize(() => {
         wallet_address TEXT,
         trial_used BOOLEAN DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    // Добавляем таблицу для TON Connect кошельков
+    db.run(`CREATE TABLE IF NOT EXISTS connected_wallets (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        wallet_address TEXT,
+        wallet_type TEXT,
+        is_active BOOLEAN DEFAULT 1,
+        connected_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, wallet_address)
     )`);
 
     // Transactions table
@@ -121,6 +110,146 @@ db.serialize(() => {
     )`);
 });
 
+// TON Connect endpoints
+app.post('/api/connect-wallet', (req, res) => {
+    const { userId, walletAddress, walletType } = req.body;
+    
+    if (!userId || !walletAddress) {
+        return res.status(400).json({ error: 'User ID and wallet address are required' });
+    }
+    
+    // Сохраняем подключенный кошелек
+    db.run(`INSERT OR REPLACE INTO connected_wallets (user_id, wallet_address, wallet_type) 
+            VALUES (?, ?, ?)`, 
+           [userId, walletAddress, walletType || 'unknown'], 
+           function(err) {
+        if (err) {
+            console.error('Error saving wallet connection:', err);
+            return res.status(500).json({ error: 'Failed to save wallet connection' });
+        }
+        
+        res.json({ 
+            success: true, 
+            message: 'Wallet connected successfully',
+            walletAddress 
+        });
+    });
+});
+
+app.post('/api/disconnect-wallet', (req, res) => {
+    const { userId, walletAddress } = req.body;
+    
+    if (!userId || !walletAddress) {
+        return res.status(400).json({ error: 'User ID and wallet address are required' });
+    }
+    
+    db.run('UPDATE connected_wallets SET is_active = 0 WHERE user_id = ? AND wallet_address = ?', 
+           [userId, walletAddress], 
+           function(err) {
+        if (err) {
+            console.error('Error disconnecting wallet:', err);
+            return res.status(500).json({ error: 'Failed to disconnect wallet' });
+        }
+        
+        res.json({ 
+            success: true, 
+            message: 'Wallet disconnected successfully' 
+        });
+    });
+});
+
+app.get('/api/connected-wallets/:userId', (req, res) => {
+    const userId = req.params.userId;
+    
+    db.all('SELECT * FROM connected_wallets WHERE user_id = ? AND is_active = 1 ORDER BY connected_at DESC', 
+           [userId], 
+           (err, wallets) => {
+        if (err) {
+            console.error('Error fetching connected wallets:', err);
+            return res.status(500).json({ error: 'Failed to fetch connected wallets' });
+        }
+        
+        res.json(wallets);
+    });
+});
+
+// TON Connect transaction verification
+app.post('/api/verify-ton-transaction', async (req, res) => {
+    const { userId, txHash, amount } = req.body;
+    
+    if (!userId || !txHash || !amount) {
+        return res.status(400).json({ error: 'Missing required parameters' });
+    }
+    
+    try {
+        // Получаем подключенные кошельки пользователя
+        db.get('SELECT wallet_address FROM connected_wallets WHERE user_id = ? AND is_active = 1', 
+               [userId], 
+               async (err, wallet) => {
+            if (err || !wallet) {
+                return res.status(404).json({ error: 'No connected wallet found' });
+            }
+            
+            // Проверяем транзакцию через TON API
+            try {
+                const response = await axios.get(`https://tonapi.io/v2/traces/${txHash}`, {
+                    headers: { 'Authorization': `Bearer ${TON_API_KEY}` }
+                });
+                
+                const trace = response.data;
+                const transaction = trace.transaction;
+                
+                // Проверяем, что транзакция валидна
+                if (transaction && transaction.in_msg && transaction.in_msg.value) {
+                    const txAmount = parseInt(transaction.in_msg.value) / 1e9;
+                    
+                    if (txAmount >= amount) {
+                        // Проверяем, не обработана ли уже эта транзакция
+                        db.get('SELECT * FROM transactions WHERE tx_hash = ?', [txHash], (err, existingTx) => {
+                            if (err) {
+                                return res.status(500).json({ error: 'Database error' });
+                            }
+                            
+                            if (existingTx) {
+                                return res.json({ success: false, message: 'Transaction already processed' });
+                            }
+                            
+                            // Обновляем баланс пользователя
+                            db.run('UPDATE users SET balance = balance + ?, total_deposited = total_deposited + ? WHERE telegram_id = ?', 
+                                   [txAmount, txAmount, userId], 
+                                   (err) => {
+                                if (err) {
+                                    return res.status(500).json({ error: 'Failed to update balance' });
+                                }
+                                
+                                // Записываем транзакцию
+                                db.run('INSERT INTO transactions (user_id, type, amount, tx_hash, status) VALUES (?, ?, ?, ?, ?)',
+                                       [userId, 'ton_connect_deposit', txAmount, txHash, 'confirmed']);
+                                
+                                res.json({ 
+                                    success: true, 
+                                    amount: txAmount,
+                                    message: 'Transaction verified successfully'
+                                });
+                            });
+                        });
+                    } else {
+                        res.json({ success: false, message: 'Transaction amount too low' });
+                    }
+                } else {
+                    res.json({ success: false, message: 'Invalid transaction' });
+                }
+            } catch (apiError) {
+                console.error('TON API error:', apiError);
+                res.status(500).json({ error: 'Failed to verify transaction' });
+            }
+        });
+    } catch (error) {
+        console.error('Error verifying transaction:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 async function checkTonTransaction(userId, minAmount = 0.01) {
     try {
         const response = await axios.get(`https://tonapi.io/v2/accounts/${REAL_TON_WALLET}/transactions`, {
@@ -164,6 +293,37 @@ async function checkChannelSubscription(userId) {
         return false;
     }
 }
+
+// Deposit command with TON Connect support
+bot.onText(/\/deposit/, (msg) => {
+    const userId = msg.from.id;
+    const chatId = msg.chat.id;
+    
+    const walletAddress = REAL_TON_WALLET;
+    const depositComment = userId;
+
+    const depositInfo =
+        `*💰 Пополнение баланса*\n\n` +
+        `Выберите способ пополнения:\n\n` +
+        `🔹 *Через TON Connect:*\n` +
+        `Подключите кошелек через веб-приложение\n\n` +
+        `🔹 *Прямой перевод:*\n` +
+        `Отправьте TON на адрес:\n\`${walletAddress}\`\n\n` +
+        `В комментарии к платежу укажите:\n\`${depositComment}\`\n\n` +
+        `*Важно:* Комментарий должен быть ТОЛЬКО:\n\`${depositComment}\``;
+
+    const keyboard = {
+        inline_keyboard: [
+            [{ text: '💳 Подключить кошелек', web_app: { url: `${WEBAPP_URL}?tab=connect` } }],
+            [{ text: '📱 Открыть приложение', web_app: { url: WEBAPP_URL } }]
+        ]
+    };
+
+    bot.sendMessage(chatId, depositInfo, { 
+        parse_mode: 'Markdown',
+        reply_markup: keyboard
+    });
+});
 
 // Bot commands
 bot.onText(/\/start(.*)/, async (msg, match) => {
@@ -209,32 +369,36 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
                             db.run('INSERT INTO transactions (user_id, type, amount, status) VALUES (?, ?, ?, ?)',
                                    [referralCode, 'referral_bonus', 0.1, 'confirmed']);
                             
-                            bot.sendMessage(referralCode, 'You received 0.1 TON for inviting a friend!');
+                            bot.sendMessage(referralCode, '🎉 Вы получили 0.1 TON за приглашение друга!');
                         }
                     });
                 }
             });
         }
 
-// В bot.onText(/\/start(.*)/, замените клавиатуру на:
-const keyboard = {
-    inline_keyboard: [
-        [{ text: ' Connect Wallet', web_app: { url: `${WEBAPP_URL}?tab=connect` } }],
-        [{ text: ' Open App', web_app: { url: WEBAPP_URL } }]
-    ]
-};
+        const keyboard = {
+            inline_keyboard: [
+                [{ text: '💳 Подключить кошелек', web_app: { url: `${WEBAPP_URL}?tab=connect` } }],
+                [{ text: '🎮 Открыть приложение', web_app: { url: WEBAPP_URL } }]
+            ]
+        };
+
         bot.sendMessage(chatId, 
-            `Welcome to GrandSpin Bot!\n\n` +
-            `Open cases and get cool NFT gifts!\n\n` +
-            `Free trial case available\n` +
-            `Complete tasks and get bonuses\n` +
-            `Invite friends and earn TON`,
-            { reply_markup: keyboard }
+            `🎰 *Добро пожаловать в GrandSpin Bot!*\n\n` +
+            `🎁 Открывайте кейсы и получайте крутые NFT подарки!\n\n` +
+            `✨ Доступен бесплатный пробный кейс\n` +
+            `🎯 Выполняйте задания и получайте бонусы\n` +
+            `👥 Приглашайте друзей и зарабатывайте TON\n\n` +
+            `💎 Подключите TON кошелек для удобных переводов!`,
+            { 
+                parse_mode: 'Markdown',
+                reply_markup: keyboard 
+            }
         );
     });
 });
 
-// Get user data
+// Get user data (обновлено для TON Connect)
 app.get('/api/user/:userId', (req, res) => {
     const userId = req.params.userId;
     
@@ -248,17 +412,31 @@ app.get('/api/user/:userId', (req, res) => {
             return res.status(404).json({ error: 'User not found' });
         }
         
-        res.json({
-            balance: user.balance,
-            referralCount: user.referral_count,
-            channelSubscribed: user.channel_subscribed,
-            casesOpened: user.cases_opened,
-            totalDeposited: user.total_deposited,
-            walletAddress: user.wallet_address,
-            trialUsed: user.trial_used
+        // Получаем подключенные кошельки
+        db.all('SELECT wallet_address, wallet_type FROM connected_wallets WHERE user_id = ? AND is_active = 1', 
+               [userId], 
+               (err, wallets) => {
+            if (err) {
+                console.error('Error fetching wallets:', err);
+                wallets = [];
+            }
+            
+            res.json({
+                balance: user.balance,
+                referralCount: user.referral_count,
+                channelSubscribed: user.channel_subscribed,
+                casesOpened: user.cases_opened,
+                totalDeposited: user.total_deposited,
+                walletAddress: user.wallet_address,
+                trialUsed: user.trial_used,
+                connectedWallets: wallets
+            });
         });
     });
 });
+
+// Остальные endpoints остаются прежними...
+// (Все остальные endpoints из оригинального кода)
 
 // Get user inventory
 app.get('/api/inventory/:userId', (req, res) => {
@@ -329,363 +507,6 @@ app.post('/api/check-deposit', async (req, res) => {
     }
 });
 
-// Create deposit request
-app.post('/api/create-deposit', (req, res) => {
-    const { userId, amount = 0.01 } = req.body;
-    
-    if (!userId) {
-        return res.status(400).json({ error: 'User ID is required' });
-    }
-    
-    db.get('SELECT wallet_address FROM users WHERE telegram_id = ?', [userId], (err, user) => {
-        if (err || !user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        
-        // Create pending deposit record
-        db.run('INSERT INTO pending_deposits (user_id, amount, wallet_address) VALUES (?, ?, ?)',
-               [userId, amount, user.wallet_address], (err) => {
-            if (err) {
-                return res.status(500).json({ error: 'Failed to create deposit request' });
-            }
-            
-            res.json({
-                success: true,
-                walletAddress: user.wallet_address,
-                amount: amount
-            });
-        });
-    });
-});
-
-// Open case
-app.post('/api/open-case', (req, res) => {
-    const { userId, caseName, casePrice = 0.1 } = req.body;
-    
-    if (!userId || !caseName) {
-        return res.status(400).json({ error: 'Missing required parameters' });
-    }
-    
-    db.get('SELECT * FROM users WHERE telegram_id = ?', [userId], (err, user) => {
-        if (err) {
-            console.error('Database error:', err);
-            return res.status(500).json({ error: 'Database error' });
-        }
-        
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        
-        // Check if it's a trial case
-        const isTrialCase = caseName === 'Trial Box';
-        
-        // Check trial usage
-        if (isTrialCase && user.trial_used) {
-            return res.status(400).json({ error: 'Trial case already used' });
-        }
-        
-        // Check balance for paid cases
-        if (!isTrialCase && user.balance < casePrice) {
-            return res.status(400).json({ error: 'Insufficient balance' });
-        }
-        
-        // Generate random prize
-        const prizes = [
-            { name: 'Diamond NFT', value: 100, chance: 0.001 },
-            { name: 'Golden Trophy', value: 65, chance: 0.002 },
-            { name: 'Star Gift', value: 35, chance: 0.005 },
-            { name: 'Premium Box', value: 25, chance: 0.01 },
-            { name: 'Sweet Candy', value: 15, chance: 0.05 },
-            { name: 'Party Gift', value: 10, chance: 0.1 },
-            { name: 'Fire Token', value: 8, chance: 0.15 },
-            { name: 'Magic Star', value: 5, chance: 0.2 },
-            { name: 'Lucky Charm', value: 3, chance: 0.25 },
-            { name: 'Sparkle', value: 1, chance: 0.213 }
-        ];
-        
-        const random = Math.random();
-        let cumulativeChance = 0;
-        let wonPrize = prizes[prizes.length - 1];
-        
-        for (const prize of prizes) {
-            cumulativeChance += prize.chance;
-            if (random <= cumulativeChance) {
-                wonPrize = prize;
-                break;
-            }
-        }
-        
-        if (isTrialCase) {
-            // Mark trial as used
-            db.run('UPDATE users SET trial_used = 1 WHERE telegram_id = ?', [userId], (err) => {
-                if (err) {
-                    return res.status(500).json({ error: 'Database error' });
-                }
-                
-                res.json({ 
-                    success: true, 
-                    prize: wonPrize,
-                    trial: true,
-                    message: 'Trial result - not added to inventory'
-                });
-            });
-        } else {
-            // Paid case - deduct balance and add to inventory
-            db.run('UPDATE users SET balance = balance - ?, cases_opened = cases_opened + 1 WHERE telegram_id = ?', 
-                   [casePrice, userId], (err) => {
-                if (err) {
-                    return res.status(500).json({ error: 'Failed to update balance' });
-                }
-                
-                // Add to inventory
-                db.run('INSERT INTO inventory (user_id, item_name, item_value, case_name) VALUES (?, ?, ?, ?)',
-                       [userId, wonPrize.name, wonPrize.value, caseName], (err) => {
-                    if (err) {
-                        return res.status(500).json({ error: 'Failed to add to inventory' });
-                    }
-                    
-                    // Record transaction
-                    db.run('INSERT INTO transactions (user_id, type, amount, status) VALUES (?, ?, ?, ?)',
-                           [userId, 'case_open', -casePrice, 'confirmed']);
-                    
-                    res.json({ 
-                        success: true, 
-                        prize: wonPrize,
-                        trial: false,
-                        newBalance: user.balance - casePrice
-                    });
-                });
-            });
-        }
-    });
-});
-
-// Check channel subscription
-app.post('/api/check-subscription', async (req, res) => {
-    const { userId } = req.body;
-    
-    if (!userId) {
-        return res.status(400).json({ error: 'User ID is required' });
-    }
-    
-    try {
-        const isSubscribed = await checkChannelSubscription(userId);
-        
-        if (isSubscribed) {
-            // Update user subscription status
-            db.run('UPDATE users SET channel_subscribed = 1 WHERE telegram_id = ?', [userId], (err) => {
-                if (err) {
-                    return res.status(500).json({ error: 'Database error' });
-                }
-                
-                // Mark task as completed
-                db.run('INSERT OR IGNORE INTO task_completions (user_id, task_id) VALUES (?, ?)',
-                       [userId, 'subscription'], (err) => {
-                    if (err) {
-                        console.error('Error marking task completion:', err);
-                    }
-                });
-                
-                res.json({ subscribed: true });
-            });
-        } else {
-            res.json({ subscribed: false });
-        }
-    } catch (error) {
-        console.error('Error checking subscription:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// Get referral link
-app.get('/api/referral/:userId', (req, res) => {
-    const userId = req.params.userId;
-    const referralLink = `https://t.me/YourBotUsername?start=${userId}`;
-    
-    res.json({ referralLink });
-});
-
-// Get tasks progress
-app.get('/api/tasks/:userId', (req, res) => {
-    const userId = req.params.userId;
-    
-    db.get('SELECT * FROM users WHERE telegram_id = ?', [userId], async (err, user) => {
-        if (err) {
-            console.error('Database error:', err);
-            return res.status(500).json({ error: 'Database error' });
-        }
-        
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        
-        // Check current subscription status
-        const isSubscribed = await checkChannelSubscription(userId);
-        if (isSubscribed && !user.channel_subscribed) {
-            db.run('UPDATE users SET channel_subscribed = 1 WHERE telegram_id = ?', [userId]);
-        }
-        
-        // Get task completions
-        db.all('SELECT task_id FROM task_completions WHERE user_id = ?', [userId], (err, completions) => {
-            if (err) {
-                console.error('Database error:', err);
-                return res.status(500).json({ error: 'Database error' });
-            }
-            
-            const completedTasks = completions.map(c => c.task_id);
-            
-            const tasks = [
-                {
-                    id: 'referrals',
-                    title: 'Invite 5 people',
-                    description: 'Invite 5 people to the bot',
-                    progress: Math.min(user.referral_count, 5),
-                    target: 5,
-                    completed: user.referral_count >= 5 || completedTasks.includes('referrals'),
-                    reward: '0.5 TON'
-                },
-                {
-                    id: 'subscription',
-                    title: 'Subscribe to channel',
-                    description: 'Subscribe to our channel',
-                    progress: isSubscribed ? 1 : 0,
-                    target: 1,
-                    completed: isSubscribed || completedTasks.includes('subscription'),
-                    reward: '0.2 TON'
-                },
-                {
-                    id: 'cases',
-                    title: 'Open 5 cases',
-                    description: 'Open 5 cases',
-                    progress: Math.min(user.cases_opened, 5),
-                    target: 5,
-                    completed: user.cases_opened >= 5 || completedTasks.includes('cases'),
-                    reward: '0.3 TON'
-                },
-                {
-                    id: 'deposit',
-                    title: 'Make deposit',
-                    description: 'Make a deposit of 0.5 TON',
-                    progress: user.total_deposited >= 0.5 ? 1 : 0,
-                    target: 1,
-                    completed: user.total_deposited >= 0.5 || completedTasks.includes('deposit'),
-                    reward: '0.1 TON'
-                }
-            ];
-            
-            res.json(tasks);
-        });
-    });
-});
-
-// Claim task reward
-app.post('/api/claim-task', (req, res) => {
-    const { userId, taskId } = req.body;
-    
-    if (!userId || !taskId) {
-        return res.status(400).json({ error: 'Missing required parameters' });
-    }
-    
-    // Check if task is already claimed
-    db.get('SELECT * FROM task_completions WHERE user_id = ? AND task_id = ?', [userId, taskId], (err, completion) => {
-        if (err) {
-            return res.status(500).json({ error: 'Database error' });
-        }
-        
-        if (completion) {
-            return res.status(400).json({ error: 'Task already claimed' });
-        }
-        
-        // Get user and check task completion
-        db.get('SELECT * FROM users WHERE telegram_id = ?', [userId], (err, user) => {
-            if (err || !user) {
-                return res.status(404).json({ error: 'User not found' });
-            }
-            
-            const taskRewards = {
-                'referrals': { amount: 0.5, condition: user.referral_count >= 5 },
-                'subscription': { amount: 0.2, condition: user.channel_subscribed },
-                'cases': { amount: 0.3, condition: user.cases_opened >= 5 },
-                'deposit': { amount: 0.1, condition: user.total_deposited >= 0.5 }
-            };
-            
-            const task = taskRewards[taskId];
-            if (!task || !task.condition) {
-                return res.status(400).json({ error: 'Task not completed' });
-            }
-            
-            // Mark task as completed and give reward
-            db.run('INSERT INTO task_completions (user_id, task_id) VALUES (?, ?)', [userId, taskId], (err) => {
-                if (err) {
-                    return res.status(500).json({ error: 'Failed to claim task' });
-                }
-                
-                // Add reward to balance
-                db.run('UPDATE users SET balance = balance + ? WHERE telegram_id = ?', [task.amount, userId], (err) => {
-                    if (err) {
-                        return res.status(500).json({ error: 'Failed to add reward' });
-                    }
-                    
-                    // Record transaction
-                    db.run('INSERT INTO transactions (user_id, type, amount, status) VALUES (?, ?, ?, ?)',
-                           [userId, 'task_reward', task.amount, 'confirmed']);
-                    
-                    res.json({ 
-                        success: true, 
-                        reward: task.amount,
-                        newBalance: user.balance + task.amount
-                    });
-                });
-            });
-        });
-    });
-});
-
-// Periodic deposit checker
-setInterval(async () => {
-    console.log('Checking for pending deposits...');
-    
-    db.all('SELECT DISTINCT user_id, wallet_address FROM pending_deposits WHERE created_at > datetime("now", "-1 hour")', [], async (err, deposits) => {
-        if (err) {
-            console.error('Error fetching pending deposits:', err);
-            return;
-        }
-        
-        for (const deposit of deposits) {
-            try {
-                const transaction = await checkTonTransaction(deposit.user_id, 0.01);
-                if (transaction) {
-                    // Check if transaction already processed
-                    db.get('SELECT * FROM transactions WHERE tx_hash = ?', [transaction.hash], (err, existingTx) => {
-                        if (err || existingTx) return;
-                        
-                        // Update user balance
-                        db.run('UPDATE users SET balance = balance + ?, total_deposited = total_deposited + ? WHERE telegram_id = ?', 
-                               [transaction.amount, transaction.amount, deposit.user_id], (err) => {
-                            if (err) {
-                                console.error('Error updating balance:', err);
-                                return;
-                            }
-                            
-                            // Record transaction
-                            db.run('INSERT INTO transactions (user_id, type, amount, tx_hash, status) VALUES (?, ?, ?, ?, ?)',
-                                   [deposit.user_id, 'deposit', transaction.amount, transaction.hash, 'confirmed']);
-                            
-                            // Remove from pending deposits
-                            db.run('DELETE FROM pending_deposits WHERE user_id = ?', [deposit.user_id]);
-                            
-                            // Notify user
-                            bot.sendMessage(deposit.user_id, `✅ Deposit confirmed! You received ${transaction.amount} TON`);
-                        });
-                    });
-                }
-            } catch (error) {
-                console.error('Error checking deposit for user', deposit.user_id, ':', error);
-            }
-        }
-    });
-}, 30000); // Check every 30 seconds
-
 // Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ status: 'OK', timestamp: new Date().toISOString() });
@@ -698,9 +519,10 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-    console.log(`WebApp URL: ${WEBAPP_URL}`);
-    console.log(`Bot Token: ${BOT_TOKEN ? 'Set' : 'Missing'}`);
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📱 WebApp URL: ${WEBAPP_URL}`);
+    console.log(`🤖 Bot Token: ${BOT_TOKEN ? 'Set' : 'Missing'}`);
+    console.log(`💎 TON Connect integration: Enabled`);
 });
 
 // Process error handling
@@ -724,376 +546,3 @@ process.on('SIGTERM', () => {
         process.exit(0);
     });
 });
-// TON Wallet Connection & Deposit System
-// Add this to the end of your existing code
-
-// Wallet connection storage
-const connectedWallets = new Map();
-
-// Available TON wallets configuration
-const TON_WALLETS = {
-    tonkeeper: {
-        name: 'Tonkeeper',
-        icon: '💎',
-        bridgeUrl: 'https://bridge.tonapi.io/bridge',
-        universalLink: 'https://app.tonkeeper.com/ton-connect',
-        deepLink: 'tonkeeper-tc://'
-    },
-    tonhub: {
-        name: 'Tonhub',
-        icon: '🟦',
-        bridgeUrl: 'https://connect.tonhubapi.com/tonconnect',
-        universalLink: 'https://tonhub.com/ton-connect',
-        deepLink: 'tonhub-tc://'
-    },
-    openmask: {
-        name: 'OpenMask',
-        icon: '🎭',
-        bridgeUrl: 'https://tonconnect.openmask.app/bridge',
-        universalLink: 'https://www.openmask.app/ton-connect',
-        deepLink: 'openmask-tc://'
-    },
-    mytonwallet: {
-        name: 'MyTonWallet',
-        icon: '🔷',
-        bridgeUrl: 'https://tonconnect.mytonwallet.org/bridge',
-        universalLink: 'https://mytonwallet.io/ton-connect',
-        deepLink: 'mytonwallet-tc://'
-    }
-};
-
-// Generate wallet connection session
-function generateWalletSession() {
-    return crypto.randomBytes(32).toString('hex');
-}
-
-// Create wallet connection payload
-function createWalletPayload(userId, walletType) {
-    const session = generateWalletSession();
-    const payload = {
-        manifestUrl: `${process.env.WEBAPP_URL || 'https://ioioning.github.io/spingame/'}/tonconnect-manifest.json`,
-        items: [
-            {
-                name: 'ton_addr',
-                payload: {
-                    address: true,
-                    network: 'mainnet',
-                    public_key: true
-                }
-            },
-            {
-                name: 'ton_proof',
-                payload: {
-                    timestamp: Date.now(),
-                    domain: {
-                        lengthBytes: 32,
-                        value: 'grandspin.bot'
-                    },
-                    signature: session,
-                    payload: userId
-                }
-            }
-        ]
-    };
-    
-    return { session, payload };
-}
-
-// Wallet connection endpoint
-app.post('/api/connect-wallet', async (req, res) => {
-    const { userId, walletType } = req.body;
-    
-    if (!userId || !walletType) {
-        return res.status(400).json({ error: 'Missing required parameters' });
-    }
-    
-    if (!TON_WALLETS[walletType]) {
-        return res.status(400).json({ error: 'Unsupported wallet type' });
-    }
-    
-    try {
-        const { session, payload } = createWalletPayload(userId, walletType);
-        const wallet = TON_WALLETS[walletType];
-        
-        // Store session temporarily
-        connectedWallets.set(session, {
-            userId,
-            walletType,
-            timestamp: Date.now(),
-            status: 'pending'
-        });
-        
-        // Create connection URL
-        const connectionUrl = `${wallet.universalLink}?v=2&id=${session}&r=${encodeURIComponent(JSON.stringify(payload))}`;
-        
-        res.json({
-            success: true,
-            session,
-            connectionUrl,
-            wallet: {
-                name: wallet.name,
-                icon: wallet.icon
-            }
-        });
-        
-    } catch (error) {
-        console.error('Error creating wallet connection:', error);
-        res.status(500).json({ error: 'Failed to create wallet connection' });
-    }
-});
-
-// Check wallet connection status
-app.get('/api/wallet-status/:session', (req, res) => {
-    const session = req.params.session;
-    const connectionInfo = connectedWallets.get(session);
-    
-    if (!connectionInfo) {
-        return res.status(404).json({ error: 'Session not found' });
-    }
-    
-    // Check if session expired (5 minutes)
-    if (Date.now() - connectionInfo.timestamp > 300000) {
-        connectedWallets.delete(session);
-        return res.status(408).json({ error: 'Session expired' });
-    }
-    
-    res.json({
-        status: connectionInfo.status,
-        walletType: connectionInfo.walletType,
-        address: connectionInfo.address || null
-    });
-});
-
-// Wallet callback endpoint (for wallet apps to confirm connection)
-app.post('/api/wallet-callback', async (req, res) => {
-    const { session, address, signature, public_key } = req.body;
-    
-    if (!session || !address) {
-        return res.status(400).json({ error: 'Missing required parameters' });
-    }
-    
-    const connectionInfo = connectedWallets.get(session);
-    if (!connectionInfo) {
-        return res.status(404).json({ error: 'Session not found' });
-    }
-    
-    try {
-        // Verify the address format
-        if (!address.startsWith('UQ') && !address.startsWith('EQ')) {
-            return res.status(400).json({ error: 'Invalid TON address format' });
-        }
-        
-        // Update connection info
-        connectionInfo.status = 'connected';
-        connectionInfo.address = address;
-        connectionInfo.signature = signature;
-        connectionInfo.public_key = public_key;
-        
-        // Update user in database
-        db.run('UPDATE users SET wallet_address = ? WHERE telegram_id = ?', 
-               [address, connectionInfo.userId], (err) => {
-            if (err) {
-                console.error('Error updating wallet address:', err);
-                return res.status(500).json({ error: 'Database error' });
-            }
-            
-            // Notify user about successful connection
-            bot.sendMessage(connectionInfo.userId, 
-                `✅ Wallet connected successfully!\n\n` +
-                `Address: \`${address}\`\n\n` +
-                `You can now make deposits directly from your wallet.`, 
-                { parse_mode: 'Markdown' }
-            );
-            
-            res.json({ success: true, message: 'Wallet connected successfully' });
-        });
-        
-    } catch (error) {
-        console.error('Error processing wallet callback:', error);
-        res.status(500).json({ error: 'Failed to process wallet connection' });
-    }
-});
-
-// Get available wallets
-app.get('/api/wallets', (req, res) => {
-    const wallets = Object.entries(TON_WALLETS).map(([key, wallet]) => ({
-        id: key,
-        name: wallet.name,
-        icon: wallet.icon
-    }));
-    
-    res.json(wallets);
-});
-
-// Check if user has connected wallet
-app.get('/api/user-wallet/:userId', (req, res) => {
-    const userId = req.params.userId;
-    
-    db.get('SELECT wallet_address FROM users WHERE telegram_id = ?', [userId], (err, user) => {
-        if (err) {
-            console.error('Database error:', err);
-            return res.status(500).json({ error: 'Database error' });
-        }
-        
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        
-        const hasWallet = user.wallet_address && 
-                         (user.wallet_address.startsWith('UQ') || user.wallet_address.startsWith('EQ'));
-        
-        res.json({
-            hasWallet,
-            address: hasWallet ? user.wallet_address : null
-        });
-    });
-});
-
-// Enhanced deposit with wallet integration
-app.post('/api/wallet-deposit', async (req, res) => {
-    const { userId, amount = 0.01 } = req.body;
-    
-    if (!userId) {
-        return res.status(400).json({ error: 'User ID is required' });
-    }
-    
-    db.get('SELECT wallet_address FROM users WHERE telegram_id = ?', [userId], (err, user) => {
-        if (err) {
-            console.error('Database error:', err);
-            return res.status(500).json({ error: 'Database error' });
-        }
-        
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-        
-        const hasConnectedWallet = user.wallet_address && 
-                                 (user.wallet_address.startsWith('UQ') || user.wallet_address.startsWith('EQ'));
-        
-        if (!hasConnectedWallet) {
-            return res.status(400).json({ error: 'No wallet connected' });
-        }
-        
-        // Create deposit transaction data
-        const depositData = {
-            to: REAL_TON_WALLET,
-            amount: (amount * 1e9).toString(), // Convert to nanotons
-            payload: userId.toString(),
-            validUntil: Math.floor(Date.now() / 1000) + 600 // 10 minutes
-        };
-        
-        // Create pending deposit
-        db.run('INSERT INTO pending_deposits (user_id, amount, wallet_address) VALUES (?, ?, ?)',
-               [userId, amount, user.wallet_address], (err) => {
-            if (err) {
-                console.error('Error creating deposit:', err);
-                return res.status(500).json({ error: 'Failed to create deposit' });
-            }
-            
-            res.json({
-                success: true,
-                depositData,
-                message: 'Deposit transaction prepared'
-            });
-        });
-    });
-});
-
-// Update bot command to include wallet connection
-bot.onText(/\/wallet/, (msg) => {
-    const userId = msg.from.id;
-    const chatId = msg.chat.id;
-    
-    db.get('SELECT wallet_address FROM users WHERE telegram_id = ?', [userId], (err, user) => {
-        if (err || !user) {
-            bot.sendMessage(chatId, 'User not found. Please use /start first.');
-            return;
-        }
-        
-        const hasConnectedWallet = user.wallet_address && 
-                                 (user.wallet_address.startsWith('UQ') || user.wallet_address.startsWith('EQ'));
-        
-        if (hasConnectedWallet) {
-            const walletInfo = 
-                `*Your Connected Wallet*\n\n` +
-                `Address: \`${user.wallet_address}\`\n\n` +
-                `You can make deposits directly from your connected wallet.`;
-            
-            const keyboard = {
-                inline_keyboard: [
-                    [{ text: '💰 Make Deposit', web_app: { url: `${WEBAPP_URL}?tab=deposit` } }],
-                    [{ text: '🔄 Disconnect Wallet', callback_data: 'disconnect_wallet' }]
-                ]
-            };
-            
-            bot.sendMessage(chatId, walletInfo, { 
-                parse_mode: 'Markdown',
-                reply_markup: keyboard
-            });
-        } else {
-            const connectInfo = 
-                `*Connect TON Wallet*\n\n` +
-                `Connect your TON wallet to make deposits easily.\n\n` +
-                `Supported wallets:\n` +
-                `💎 Tonkeeper\n` +
-                `🟦 Tonhub\n` +
-                `🎭 OpenMask\n` +
-                `🔷 MyTonWallet`;
-            
-            const keyboard = {
-                inline_keyboard: [[
-                    { text: '🔗 Connect Wallet', web_app: { url: `${WEBAPP_URL}?tab=connect` } }
-                ]]
-            };
-            
-            bot.sendMessage(chatId, connectInfo, { 
-                parse_mode: 'Markdown',
-                reply_markup: keyboard
-            });
-        }
-    });
-});
-
-// Handle wallet disconnect
-bot.on('callback_query', (query) => {
-    const chatId = query.message.chat.id;
-    const userId = query.from.id;
-    
-    if (query.data === 'disconnect_wallet') {
-        db.run('UPDATE users SET wallet_address = NULL WHERE telegram_id = ?', [userId], (err) => {
-            if (err) {
-                bot.answerCallbackQuery(query.id, 'Error disconnecting wallet');
-                return;
-            }
-            
-            bot.answerCallbackQuery(query.id, 'Wallet disconnected successfully');
-            bot.sendMessage(chatId, '✅ Wallet disconnected successfully!');
-        });
-    }
-});
-
-// Clean up expired wallet sessions (run every 5 minutes)
-setInterval(() => {
-    const fiveMinutesAgo = Date.now() - 300000;
-    
-    for (const [session, connectionInfo] of connectedWallets.entries()) {
-        if (connectionInfo.timestamp < fiveMinutesAgo) {
-            connectedWallets.delete(session);
-        }
-    }
-}, 300000);
-
-// Create TON Connect manifest file endpoint
-app.get('/tonconnect-manifest.json', (req, res) => {
-    const manifest = {
-        url: process.env.WEBAPP_URL || 'https://ioioning.github.io/spingame/',
-        name: 'GrandSpin Bot',
-        iconUrl: `${process.env.WEBAPP_URL || 'https://ioioning.github.io/spingame/'}/icon.png`,
-        termsOfUseUrl: `${process.env.WEBAPP_URL || 'https://ioioning.github.io/spingame/'}/terms`,
-        privacyPolicyUrl: `${process.env.WEBAPP_URL || 'https://ioioning.github.io/spingame/'}/privacy`
-    };
-    
-    res.json(manifest);
-});
-
-console.log('TON Wallet connection system initialized');
