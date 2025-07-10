@@ -392,6 +392,185 @@
         .shown {
             display: block;
         }
+
+const giftsModalCSS = `
+.gifts-modal-content {
+    max-width: 500px;
+    max-height: 80vh;
+    overflow-y: auto;
+    background: #1a1a1a;
+    border-radius: 20px;
+    padding: 0;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    border-bottom: 1px solid #333;
+    background: #2a2a2a;
+    border-radius: 20px 20px 0 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 0;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    color: #fff;
+}
+
+.gifts-container {
+    padding: 25px;
+}
+
+.featured-gifts {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.gift-item {
+    background: #2a2a2a;
+    border-radius: 15px;
+    padding: 15px;
+    text-align: center;
+    min-width: 80px;
+    border: 2px solid transparent;
+}
+
+.gift-item.featured {
+    border-color: #0088cc;
+    background: linear-gradient(135deg, #2a2a2a 0%, #1a3a4a 100%);
+}
+
+.gift-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.gift-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #0088cc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+
+.gift-value::before {
+    content: '';
+    width: 12px;
+    height: 12px;
+    background: #0088cc;
+    border-radius: 50%;
+}
+
+.insufficient-notice {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: #2a1a1a;
+    border: 1px solid #ff4444;
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 15px;
+    color: #ff4444;
+}
+
+.notice-icon {
+    font-size: 20px;
+}
+
+.notice-text {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.deposit-action-btn {
+    background: #0088cc;
+    color: white;
+    padding: 12px 30px;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 25px;
+    transition: background 0.3s ease;
+}
+
+.deposit-action-btn:hover {
+    background: #0066aa;
+}
+
+.gifts-subtitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #888;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.gifts-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.gifts-grid .gift-item {
+    background: #2a2a2a;
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    min-width: auto;
+}
+
+.gifts-grid .gift-icon {
+    font-size: 20px;
+    margin-bottom: 6px;
+}
+
+.gifts-grid .gift-value {
+    font-size: 12px;
+}
+
+.gifts-grid .gift-value::before {
+    width: 10px;
+    height: 10px;
+}
+
+@media (max-width: 480px) {
+    .gifts-modal-content {
+        margin: 10px;
+        max-height: 85vh;
+    }
+
+    .featured-gifts {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .gifts-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+`;
     </style>
 </head>
 <body>
@@ -449,6 +628,76 @@
                 </div>
             </div>
         </div>
+
+	<!-- Gifts Modal -->
+<div id="gifts-modal" class="modal">
+    <div class="modal-content gifts-modal-content">
+        <div class="modal-header">
+            <div class="modal-title" id="gifts-title">Heart Locket</div>
+            <button class="modal-close" onclick="closeGiftsModal()">×</button>
+        </div>
+        <div class="gifts-container">
+            <div class="featured-gifts">
+                <div class="gift-item featured">
+                    <div class="gift-icon">💎</div>
+                    <div class="gift-value">99.26</div>
+                </div>
+                <div class="gift-item featured">
+                    <div class="gift-icon">🍫</div>
+                    <div class="gift-value">5.34</div>
+                </div>
+                <div class="gift-item featured">
+                    <div class="gift-icon">🖤</div>
+                    <div class="gift-value">7.21</div>
+                </div>
+            </div>
+            <div class="insufficient-notice" id="insufficient-notice">
+                <div class="notice-icon">⚠️</div>
+                <div class="notice-text">Not enough funds</div>
+            </div>
+            <button class="deposit-action-btn" onclick="showDepositModal()">Deposit</button>
+            <div class="gifts-subtitle">Possible prizes:</div>
+            <div class="gifts-grid" id="gifts-grid">
+                <!-- Будет заполнено JavaScript -->
+            </div>
+        </div>
+    </div>
+</div>
+
+    const modalHTML = `
+    <div id="gifts-modal" class="modal">
+        <div class="modal-content gifts-modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="gifts-title">Heart Locket</div>
+                <button class="modal-close" onclick="closeGiftsModal()">×</button>
+            </div>
+            <div class="gifts-container">
+                <div class="featured-gifts">
+                    <div class="gift-item featured">
+                        <div class="gift-icon">💎</div>
+                        <div class="gift-value">99.26</div>
+                    </div>
+                    <div class="gift-item featured">
+                        <div class="gift-icon">🍫</div>
+                        <div class="gift-value">5.34</div>
+                    </div>
+                    <div class="gift-item featured">
+                        <div class="gift-icon">🖤</div>
+                        <div class="gift-value">7.21</div>
+                    </div>
+                </div>
+                <div class="insufficient-notice" id="insufficient-notice">
+                    <div class="notice-icon">⚠️</div>
+                    <div class="notice-text">Not enough funds</div>
+                </div>
+                <button class="deposit-action-btn" onclick="showDepositModal()">Deposit</button>
+                <div class="gifts-subtitle">Possible prizes:</div>
+                <div class="gifts-grid" id="gifts-grid">
+                    <!-- Будет заполнено JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
 
         <!-- Profile Section -->
         <div id="profile-section" class="profile-section">
@@ -1360,7 +1609,83 @@
                 { value: '1 TON', icon: '🎊' },
                 { value: '0.5 TON', icon: '🎈' }
             ];
-            
+           
+	     const styleSheet = document.createElement('style');
+styleSheet.textContent = giftsModalCSS;
+document.head.appendChild(styleSheet);
+
+// Функция для показа окна подарков
+function showGiftsModal(giftName) {
+    const modal = document.getElementById('gifts-modal');
+    const title = document.getElementById('gifts-title');
+    const giftsGrid = document.getElementById('gifts-grid');
+    const insufficientNotice = document.getElementById('insufficient-notice');
+    
+    if (title) title.textContent = giftName;
+    
+    // Данные призов для разных подарков
+    const giftsData = {
+        'Heart Locket': [
+            { icon: '💍', value: '1961.52' },
+            { icon: '🧢', value: '758.51' },
+            { icon: '👨', value: '308.26' },
+            { icon: '💎', value: '103.5' },
+            { icon: '💎', value: '99.26' },
+            { icon: '📦', value: '10.76' },
+            { icon: '🎂', value: '10.45' },
+            { icon: '⭐', value: '5.88' },
+            { icon: '🎀', value: '5.54' },
+            { icon: '🍫', value: '5.34' },
+            { icon: '☁️', value: '4.94' },
+            { icon: '🏠', value: '3.69' }
+        ],
+        'Sweet Box': [
+            { icon: '🍭', value: '50.0' },
+            { icon: '🍫', value: '25.0' },
+            { icon: '🧁', value: '15.0' },
+            { icon: '🍰', value: '10.0' },
+            { icon: '🍪', value: '8.0' },
+            { icon: '🍩', value: '5.0' }
+        ],
+        'Star Box': [
+            { icon: '⭐', value: '100.0' },
+            { icon: '🌟', value: '50.0' },
+            { icon: '✨', value: '25.0' },
+            { icon: '💫', value: '15.0' },
+            { icon: '🌠', value: '10.0' },
+            { icon: '⚡', value: '8.0' }
+        ]
+    };
+    
+    // Заполнить сетку призов
+    const prizes = giftsData[giftName] || giftsData['Heart Locket'];
+    if (giftsGrid) {
+        giftsGrid.innerHTML = prizes.map(prize => `
+            <div class="gift-item">
+                <div class="gift-icon">${prize.icon}</div>
+                <div class="gift-value">${prize.value}</div>
+            </div>
+        `).join('');
+    }
+    
+    // Проверить баланс (предполагаем, что нужно минимум 5 TON)
+    const requiredBalance = 5.0;
+    if (userBalance < requiredBalance) {
+        if (insufficientNotice) insufficientNotice.style.display = 'flex';
+    } else {
+        if (insufficientNotice) insufficientNotice.style.display = 'none';
+    }
+    
+    if (modal) modal.style.display = 'flex';
+}
+
+// Функция для закрытия окна подарков
+function closeGiftsModal() {
+    const modal = document.getElementById('gifts-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+
             // Create multiple sets of prizes for continuous spinning
             const spinnerItems = [];
             for (let i = 0; i < 5; i++) {
