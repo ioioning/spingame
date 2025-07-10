@@ -280,6 +280,7 @@
             justify-content: space-around;
             align-items: center;
             box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
+	    z-index: 100;
         }
 
         .nav-item {
@@ -713,37 +714,58 @@
         <h3>Wallet</h3>
         <div class="wallet-section" id="wallet-section">
             
-<div class="profile-balance">
-    <h3>Wallet</h3>
-    <div class="wallet-section" id="wallet-section">
-        <div id="wallet-disconnected">
-            <div style="font-size: 16px; margin-bottom: 15px; color: #888;">
-                Connect your TON wallet
+<div id="profile-section" class="profile-section">
+    <div class="profile-header">
+        <h2>Profile</h2>
+    </div>
+    
+    <div class="profile-balance">
+        <h3>Wallet</h3>
+        <div class="wallet-section" id="wallet-section">
+            <div id="wallet-disconnected">
+                <div style="font-size: 16px; margin-bottom: 15px; color: #888;">
+                    Connect your TON wallet
+                </div>
+                <button class="connect-btn" id="connect-wallet-btn">
+                    Connect Wallet
+                </button>
             </div>
-            <button class="connect-btn" id="connect-wallet-btn">
-                Connect Wallet
-            </button>
-        </div>
-        
-        <div style="margin-top: 20px;">
-            <button class="deposit-btn" onclick="showDepositModal()">Manual Deposit</button>
+            
+            <div id="wallet-connected" style="display: none;">
+                <div class="wallet-info">
+                    <div class="balance-icon" style="width: 20px; height: 20px;"></div>
+                    <div>
+                        <div style="font-size: 14px; font-weight: 600;">Connected</div>
+                        <div class="wallet-address" id="wallet-address">Loading...</div>
+                    </div>
+                </div>
+                <div class="ton-amount" id="wallet-balance">
+                    Loading...
+                </div>
+                <button class="disconnect-btn" id="disconnect-wallet-btn">
+                    Disconnect
+                </button>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <button class="deposit-btn" onclick="showDepositModal()">Manual Deposit</button>
+            </div>
         </div>
     </div>
-</div>
-        <!-- Tasks Section -->
-        <div id="tasks-section" class="tasks-section">
-            <div class="task-item">
-                <div class="task-info">
-                    <div class="task-title">Invite friends</div>
-                    <div class="task-description">Invite 20 people</div>
-                    <div class="task-progress">
-                        <div class="task-progress-fill" style="width: 0%"></div>
-                    </div>
-                    <div class="task-progress-text">0/20 people subscribed to the channel</div>
-                </div>
-                <button class="share-btn" onclick="shareBot()">Share</button>
-            </div>
 
+    <!-- Tasks Section -->
+    <div class="task-item">
+        <div class="task-info">
+            <div class="task-title">Invite friends</div>
+            <div class="task-description">Invite 20 people</div>
+            <div class="task-progress">
+                <div class="task-progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="task-progress-text">0/20 people subscribed to the channel</div>
+        </div>
+        <button class="share-btn" onclick="shareBot()">Share</button>
+    </div>
+</div>
             <div class="task-item">
                 <div class="task-info">
                     <div class="task-title">Subscribe on channel</div>
@@ -833,6 +855,20 @@
     </div>
 
     <script>
+	    // Fix duplicate wallet-connected element
+document.addEventListener('DOMContentLoaded', function() {
+    // Remove duplicate wallet-connected from main content
+    const duplicateWalletConnected = document.querySelector('.content #wallet-connected');
+    if (duplicateWalletConnected) {
+        duplicateWalletConnected.remove();
+    }
+
+    // Initialize app
+    setTimeout(() => {
+        initTonConnect();
+        switchTab('home');
+    }, 100);
+});
         let currentTab = 'home';
         let userBalance = 0.07;
         let currentCasePrice = 0;
@@ -1085,17 +1121,6 @@
             }
         });
 
-    // TON Connect initialization
-    let tonConnectUI;
-    let connectedWallet = null;
-
-    // Initialize TON Connect
-    function initTonConnect() {
-        tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-            manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json',
-            buttonRootId: 'connect-wallet-btn'
-        });
-
         // Listen for wallet connection status
         tonConnectUI.onStatusChange((wallet) => {
             if (wallet) {
@@ -1194,28 +1219,30 @@
         }
     }
 
-    // Modify the existing startSpin function to use TON Connect
-    function startSpinWithWallet() {
-        if (isSpinning) return;
+function startSpinWithWallet() {
+    if (isSpinning) return;
 
-        if (isTrialCase) {
-            startSpin(); // Use existing trial logic
-            return;
-        }
-
-        if (!connectedWallet) {
-            alert('Please connect your wallet to open cases');
-            return;
-        }
-
-        // Send transaction first
-        sendTransaction(currentCasePrice).then((result) => {
-            if (result) {
-                startSpin(); // Use existing spin logic
-            }
-        });
+    if (isTrialCase) {
+        // Для trial case используем существующую логику
+        if (isSpinning || (!isTrialCase && userBalance < currentCasePrice)) return;
+        
+        isSpinning = true;
+        
+        return;
     }
 
+    if (!connectedWallet) {
+        alert('Please connect your wallet to open cases');
+        return;
+    }
+
+    // Send transaction first
+    sendTransaction(currentCasePrice).then((result) => {
+        if (result) {
+            // Вставьте сюда тот же код спина
+        }
+    });
+}
     // Update the existing spin button onclick to use new function
     // You'll need to change the onclick in the HTML from "startSpin()" to "startSpinWithWallet()"
 
