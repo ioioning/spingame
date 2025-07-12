@@ -455,42 +455,35 @@
             <div class="profile-header">
                 <h2>Profile</h2>
             </div>
+	     <div class="wallet-section" id="wallet-section">
+                <div id="wallet-disconnected">
+                    <div style="font-size: 16px; margin-bottom: 15px; color: #888;">
+                        Connect your TON wallet
+                    </div>
+                    <button class="connect-btn" id="connect-wallet-btn">
+                        Connect Wallet
+                    </button>
+                </div>
 
+                <div id="wallet-connected" style="display: none;">
+                    <div class="wallet-info">
+                        <div class="balance-icon" style="width: 20px; height: 20px;"></div>
+                        <div>
+                            <div style="font-size: 14px; font-weight: 600;">Connected</div>
+                            <div class="wallet-address" id="wallet-address">Loading...</div>
+                        </div>
+                    </div>
+                    <div class="ton-amount" id="wallet-balance">
+                        Loading...
+                    </div>
+                    <button class="disconnect-btn" id="disconnect-wallet-btn">
+                        Disconnect
+                    </button>
+                </div>
+                <div style="margin-top: 20px;">
+                    <button class="deposit-btn" onclick="showDepositModal()">Manual Deposit</button>
+                </div>
 
-<div class="wallet-section" id="wallet-section">
-    <div id="wallet-disconnected">
-        <div style="font-size: 16px; margin-bottom: 15px; color: #888;">
-            Connect your TON wallet
-        </div>
-        <button class="connect-btn" id="connect-wallet-btn">
-            Connect Wallet
-        </button>
-        <!-- Добавляем кнопку Manual Deposit здесь -->
-        <div style="margin-top: 15px;">
-            <button class="deposit-btn" onclick="showDepositModal()">Manual Deposit</button>
-        </div>
-    </div>
-
-    <div id="wallet-connected" style="display: none;">
-        <div class="wallet-info">
-            <div class="balance-icon" style="width: 20px; height: 20px;"></div>
-            <div>
-                <div style="font-size: 14px; font-weight: 600;">Connected</div>
-                <div class="wallet-address" id="wallet-address">Loading...</div>
-            </div>
-        </div>
-        <div class="ton-amount" id="wallet-balance">
-            Loading...
-        </div>
-        <button class="disconnect-btn" id="disconnect-wallet-btn">
-            Disconnect
-        </button>
-        <!-- Добавляем кнопку Manual Deposit и здесь для подключенного кошелька -->
-        <div style="margin-top: 15px;">
-            <button class="deposit-btn" onclick="showDepositModal()">Manual Deposit</button>
-        </div>
-    </div>
-</div>
 
          <!-- Tasks Section -->
         <div id="tasks-section" class="profile-section">
