@@ -392,513 +392,133 @@
         .shown {
             display: block;
         }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div></div>
-        <div class="balance" id="balance">
-            <div class="balance-icon"></div>
-            <span>0.07 TON</span>
-        </div>
-    </div>
 
-    <div class="content">
-        <!-- Home Section -->
-        <div id="home-section">
-            <div class="cases-grid">
-                <div class="case-card trial" onclick="showCasePrizes('Trial Box')">
-                    <div class="case-title">Trial Box</div>
-                    <div class="case-price free">FREE</div>
-                    <div class="trial-badge">TRIAL</div>
-                </div>
-                <div class="case-card" onclick="showCasePrizes('Sweet Box')">
-                    <div class="case-title">Sweet Box</div>
-                    <div class="case-price">
-                        <div class="balance-icon"></div>
-                        5
-                    </div>
-                </div>
-                <div class="case-card" onclick="showCasePrizes('Star Box')">
-                    <div class="case-title">Star Box</div>
-                    <div class="case-price">
-                        <div class="balance-icon"></div>
-                        15
-                    </div>
-                </div>
-                <div class="case-card" onclick="showCasePrizes('Golden Case')">
-                    <div class="case-title">Golden Case</div>
-                    <div class="case-price">
-                        <div class="balance-icon"></div>
-                        35
-                    </div>
-                </div>
-                <div class="case-card" onclick="showCasePrizes('Premium Box')">
-                    <div class="case-title">Premium Box</div>
-                    <div class="case-price">
-                        <div class="balance-icon"></div>
-                        65
-                    </div>
-                </div>
-                <div class="case-card" onclick="showCasePrizes('Diamond Case')">
-                    <div class="case-title">Diamond Case</div>
-                    <div class="case-price">
-                        <div class="balance-icon"></div>
-                        100
-                    </div>
-                </div>
-            </div>
-        </div>
-
-	<!-- Profile Section -->
-        <div id="profile-section" class="profile-section">
-            <div class="profile-header">
-                <h2>Profile</h2>
-            </div>
-            
-            <div class="wallet-section" id="wallet-section">
-               <div id="wallet-disconnected">
-                   <div style="font-size: 16px; margin-bottom: 15px; color: #888;">
-                       Connect your TON wallet
-                   </div>
-                   <button class="connect-btn" id="connect-wallet-btn">
-                       Connect Wallet
-                   </button>
-               </div>
-               
-               <div id="wallet-connected" style="display: none;">
-                   <div class="wallet-info">
-                       <div class="balance-icon" style="width: 20px; height: 20px;"></div>
-                       <div>
-                           <div style="font-size: 14px; font-weight: 600;">Connected</div>
-                           <div class="wallet-address" id="wallet-address">Loading...</div>
-                       </div>
-                   </div>
-                   <div class="ton-amount" id="wallet-balance">
-                       Loading...
-                   </div>
-                   <button class="disconnect-btn" id="disconnect-wallet-btn">
-                       Disconnect
-                   </button>
-               </div>
-               
-               <div style="margin-top: 20px;">
-                   <button class="deposit-btn" onclick="showDepositModal()">Manual Deposit</button>
-               </div>
-            </div>
-        </div>
-
-        <!-- Tasks Section -->
-        <div id="tasks-section" class="profile-section">
-            <div class="task-item">
-                <div class="task-info">
-                    <div class="task-title">Invite friends</div>
-                    <div class="task-description">Invite 20 people</div>
-                    <div class="task-progress">
-                        <div class="task-progress-fill" style="width: 0%"></div>
-                    </div>
-                    <div class="task-progress-text">0/20 people subscribed to the channel</div>
-                </div>
-                <button class="share-btn" onclick="shareBot()">Share</button>
-            </div>
-            
-            <div class="task-item">
-                <div class="task-info">
-                    <div class="task-title">Subscribe on channel</div>
-                    <div class="task-description">Subscribe on channel</div>
-                    <div class="task-progress">
-                        <div class="task-progress-fill" style="width: 0%"></div>
-                    </div>
-                    <div class="task-progress-text">0/1 subscription</div>
-                </div>
-                <button class="share-btn" onclick="openChannel()">Join</button>
-            </div>
-
-            <div class="task-item">
-                <div class="task-info">
-                    <div class="task-title">Open case</div>
-                    <div class="task-description">Open 10 cases</div>
-                    <div class="task-progress">
-                        <div class="task-progress-fill" style="width: 0%"></div>
-                    </div>
-                    <div class="task-progress-text">0/10 cases</div>
-                </div>
-            </div>
-
-            <div class="task-item">
-                <div class="task-info">
-                    <div class="task-title">Deposit 1 ton</div>
-                    <div class="task-description">Deposit 1 ton</div>
-                    <div class="task-progress">
-                        <div class="task-progress-fill" style="width: 0%"></div>
-                    </div>
-                    <div class="task-progress-text">0/1 TON</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchTab('home')">
-            <span>Home</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('profile')">
-            <span>Profile</span>
-        </div>
-        <div class="nav-item" onclick="switchTab('tasks')">
-            <span>Tasks</span>
-        </div>
-    </div>
-
-    <!-- Deposit Modal -->
-    <div id="deposit-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-title">Deposit TON</div>
-            <div class="ton-address">UQDx5LBGp7K7A5hrYu4y6W5RPO4hwk5fL_LWzov0FlYeJMMp</div>
-            <button class="copy-btn" onclick="copyAddress()">Copy Address</button>
-            <button class="close-btn" onclick="closeDepositModal()">Close</button>
-        </div>
-    </div>
-
-    <!-- Case Prizes Modal -->
-    <div id="case-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-title" id="case-title">Case Prizes</div>
-            <div class="case-prizes" id="case-prizes">
-                <!-- Will be populated by JavaScript -->
-            </div>
-            <div id="spin-section">
-                <button class="spin-btn" id="spin-btn" onclick="startSpinWithWallet()">SPIN</button>
-                <div class="insufficient-funds" id="insufficient-funds" style="display: none;">
-                    Not enough TON to open this case
-                </div>
-                <div class="trial-notice" id="trial-notice" style="display: none;">
-                    This is a trial box! Prizes are not real and won't be added to your inventory.
-                </div>
-            </div>
-            <button class="close-btn" onclick="closeCaseModal()" style="margin-top: 20px;">Close</button>
-        </div>
-    </div>
-
-    <script>
-        // TON Connect initialization
-        let tonConnectUI;
-        let connectedWallet = null;
-        let currentTab = 'home';
-        let userBalance = 0.07;
-        let currentCasePrice = 0;
-        let currentCaseName = '';
-        let isSpinning = false;
-        let isTrialCase = false;
-
-        // Initialize TON Connect
-        async function initTonConnect() {
-            try {
-                tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-                    manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json'
-                });
-
-                // Listen for wallet connection status
-                tonConnectUI.onStatusChange((wallet) => {
-                    if (wallet) {
-                        connectedWallet = wallet;
-                        updateWalletUI(true);
-                        getWalletBalance();
-                    } else {
-                        connectedWallet = null;
-                        updateWalletUI(false);
-                    }
-                });
-
-                // Set up connect button
-                const connectBtn = document.getElementById('connect-wallet-btn');
-                if (connectBtn) {
-                    connectBtn.addEventListener('click', () => {
-                        tonConnectUI.openModal();
-                    });
-                }
-
-                // Set up disconnect button
-                const disconnectBtn = document.getElementById('disconnect-wallet-btn');
-                if (disconnectBtn) {
-                    disconnectBtn.addEventListener('click', () => {
-                        tonConnectUI.disconnect();
-                    });
-                }
-
-            } catch (error) {
-                console.error('TON Connect initialization failed:', error);
-            }
+        /* Rewards Horizontal Scroll Styles */
+        .rewards-container {
+            padding: 20px 0;
+            margin-bottom: 20px;
         }
 
-        // Update wallet UI
-        function updateWalletUI(connected) {
-            const disconnectedEl = document.getElementById('wallet-disconnected');
-            const connectedEl = document.getElementById('wallet-connected');
-            const walletSection = document.getElementById('wallet-section');
-
-            if (connected && connectedWallet) {
-                if (disconnectedEl) disconnectedEl.style.display = 'none';
-                if (connectedEl) connectedEl.style.display = 'block';
-                if (walletSection) walletSection.classList.add('wallet-connected');
-
-                const address = connectedWallet.account.address;
-                const shortAddress = address.slice(0, 8) + '...' + address.slice(-6);
-                const walletAddressEl = document.getElementById('wallet-address');
-                if (walletAddressEl) walletAddressEl.textContent = shortAddress;
-            } else {
-                if (disconnectedEl) disconnectedEl.style.display = 'block';
-                if (connectedEl) connectedEl.style.display = 'none';
-                if (walletSection) walletSection.classList.remove('wallet-connected');
-            }
-        }
-
-        // Get wallet balance
-        async function getWalletBalance() {
-            if (!connectedWallet) return;
-
-            try {
-                const balanceEl = document.getElementById('wallet-balance');
-                if (balanceEl) balanceEl.textContent = 'Loading...';
-
-                setTimeout(() => {
-                    if (balanceEl) balanceEl.textContent = '0.00 TON';
-                }, 1000);
-            } catch (error) {
-                console.error('Error fetching balance:', error);
-                const balanceEl = document.getElementById('wallet-balance');
-                if (balanceEl) balanceEl.textContent = 'Error loading balance';
-            }
-        }
-
-        // Send transaction
-        async function sendTransaction(amount) {
-            if (!connectedWallet) {
-                alert('Please connect your wallet first');
-                return false;
-            }
-
-            try {
-                const transaction = {
-                    validUntil: Math.floor(Date.now() / 1000) + 300,
-                    messages: [
-                        {
-                            address: 'UQDx5LBGp7K7A5hrYu4y6W5RPO4hwk5fL_LWzov0FlYeJMMp',
-                            amount: (amount * 1000000000).toString(),
-                            payload: btoa('Case opening payment')
-                        }
-                    ]
-                };
-
-                const result = await tonConnectUI.sendTransaction(transaction);
-                return result;
-            } catch (error) {
-                console.error('Transaction failed:', error);
-                alert('Transaction failed: ' + error.message);
-                return false;
-            }
-        }
-
-        // Switch tabs
-        function switchTab(tab) {
-            // Hide all sections
-            const sections = ['home-section', 'profile-section', 'tasks-section'];
-            sections.forEach(sectionId => {
-                const element = document.getElementById(sectionId);
-                if (element) element.style.display = 'none';
-            });
-
-            // Show selected section
-            const selectedSection = document.getElementById(tab + '-section');
-            if (selectedSection) selectedSection.style.display = 'block';
-
-            // Update nav items
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-
-            // Find the clicked nav item
-            const clickedItem = event ? event.target.closest('.nav-item') : document.querySelector('.nav-item');
-            if (clickedItem) clickedItem.classList.add('active');
-
-            // Show/hide balance in header
-            const balance = document.getElementById('balance');
-            if (balance) {
-                if (tab === 'home' || tab === 'tasks') {
-                    balance.style.display = 'flex';
-                } else {
-                    balance.style.display = 'none';
-                }
-            }
-
-            currentTab = tab;
-        }
-
-        // Show deposit modal
-        function showDepositModal() {
-            const modal = document.getElementById('deposit-modal');
-            if (modal) modal.style.display = 'flex';
-        }
-
-        // Close deposit modal
-        function closeDepositModal() {
-            const modal = document.getElementById('deposit-modal');
-            if (modal) modal.style.display = 'none';
-        }
-
-        // Copy address
-        function copyAddress() {
-            const address = "UQDx5LBGp7K7A5hrYu4y6W5RPO4hwk5fL_LWzov0FlYeJMMp";
-            navigator.clipboard.writeText(address).then(() => {
-                alert('Address copied to clipboard!');
-            });
-        }
-
-        // Show case prizes
-        function showCasePrizes(caseName) {
-            const caseTitleEl = document.getElementById('case-title');
-            if (caseTitleEl) caseTitleEl.textContent = caseName;
-
-            const caseData = {
-                'Trial Box': 0,
-                'Sweet Box': 5,
-                'Star Box': 15,
-                'Golden Case': 35,
-                'Premium Box': 65,
-                'Diamond Case': 100
-            };
-
-            currentCasePrice = caseData[caseName];
-            currentCaseName = caseName;
-            isTrialCase = caseName === 'Trial Box';
-
-            const spinBtn = document.getElementById('spin-btn');
-            const insufficientFunds = document.getElementById('insufficient-funds');
-            const trialNotice = document.getElementById('trial-notice');
-
-            if (isTrialCase) {
-                if (spinBtn) {
-                    spinBtn.disabled = false;
-                    spinBtn.textContent = 'TRY FOR FREE';
-                    spinBtn.classList.add('trial');
-                }
-                if (insufficientFunds) insufficientFunds.style.display = 'none';
-                if (trialNotice) trialNotice.style.display = 'block';
-            } else {
-                if (spinBtn) {
-                    spinBtn.classList.remove('trial');
-                    if (userBalance >= currentCasePrice) {
-                        spinBtn.disabled = false;
-                        spinBtn.textContent = `SPIN (${currentCasePrice} TON)`;
-                        if (insufficientFunds) insufficientFunds.style.display = 'none';
-                    } else {
-                        spinBtn.disabled = true;
-                        spinBtn.textContent = 'INSUFFICIENT FUNDS';
-                        if (insufficientFunds) insufficientFunds.style.display = 'block';
-                    }
-                }
-                if (trialNotice) trialNotice.style.display = 'none';
-            }
-
-            const modal = document.getElementById('case-modal');
-            if (modal) modal.style.display = 'flex';
-        }
-
-        // Start spin with wallet
-        function startSpinWithWallet() {
-            if (isSpinning) return;
-
-            if (isTrialCase) {
-                // For trial case, just show result
-                alert('Trial case opened! This is just a demo.');
-                return;
-            }
-
-            if (!connectedWallet) {
-                alert('Please connect your wallet to open cases');
-                return;
-            }
-
-            // Send transaction first
-            sendTransaction(currentCasePrice).then((result) => {
-                if (result) {
-                    alert('Transaction successful! Case opened.');
-                    // Here you would implement the actual case opening logic
-                }
-            });
-        }
-
-        // Close case modal
-        function closeCaseModal() {
-            const modal = document.getElementById('case-modal');
-            if (modal) modal.style.display = 'none';
-        }
-
-        // Share bot
-        function shareBot() {
-            const url = 'https://t.me/GrandSpinBot';
-            const text = 'Check out this amazing case opening bot!';
-            if (window.Telegram && window.Telegram.WebApp) {
-                window.Telegram.WebApp.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
-            } else {
-                window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
-            }
-        }
-
-        // Open channel
-        function openChannel() {
-            if (window.Telegram && window.Telegram.WebApp) {
-                window.Telegram.WebApp.openTelegramLink('https://t.me/openingcases');
-            } else {
-                window.open('https://t.me/openingcases', '_blank');
-            }
-        }
-
-        // Initialize the app
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize TON Connect
-            setTimeout(() => {
-                initTonConnect();
-            }, 100);
-
-            // Set initial tab
-            switchTab('home');
-
-            // Initialize Telegram WebApp
-            if (window.Telegram && window.Telegram.WebApp) {
-                window.Telegram.WebApp.ready();
-                window.Telegram.WebApp.expand();
-            }
-        });
-    </script>
-
-    <style>
-        .case-prizes {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .prize-item {
-            background: #2a2a2a;
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-        }
-
-        .prize-icon {
-            width: 40px;
-            height: 40px;
-            margin: 0 auto 8px;
-            background: linear-gradient(45deg, #ff6b6b, #ffd93d);
-            border-radius: 8px;
+        .rewards-scroll {
             display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            padding: 10px 0;
+            margin: 0 -20px;
+            padding-left: 20px;
+            padding-right: 20px;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .rewards-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .reward-item {
+            min-width: 80px;
+            width: 80px;
+            height: 100px;
+            background: #2a2a2a;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-
+            position: relative;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
 
-	    .spinner-container {
+        .reward-item.common {
+            border-color: #888;
+            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
+        }
+
+        .reward-item.rare {
+            border-color: #0088cc;
+            background: linear-gradient(135deg, #003366 0%, #001a33 100%);
+        }
+
+        .reward-item.epic {
+            border-color: #8b5cf6;
+            background: linear-gradient(135deg, #4c1d95 0%, #2d1b69 100%);
+        }
+
+        .reward-item.legendary {
+            border-color: #ff9800;
+            background: linear-gradient(135deg, #ff6f00 0%, #e65100 100%);
+        }
+
+        .reward-item.mythic {
+            border-color: #ff1744;
+            background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+        }
+
+        .reward-rarity-corner {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 0 18px 18px 0;
+        }
+
+        .reward-item.common .reward-rarity-corner {
+            border-color: transparent #888 transparent transparent;
+        }
+
+        .reward-item.rare .reward-rarity-corner {
+            border-color: transparent #0088cc transparent transparent;
+        }
+
+        .reward-item.epic .reward-rarity-corner {
+            border-color: transparent #8b5cf6 transparent transparent;
+        }
+
+        .reward-item.legendary .reward-rarity-corner {
+            border-color: transparent #ff9800 transparent transparent;
+        }
+
+        .reward-item.mythic .reward-rarity-corner {
+            border-color: transparent #ff1744 transparent transparent;
+        }
+
+        .reward-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .reward-value {
+            font-size: 10px;
+            font-weight: 600;
+            color: #fff;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        .reward-item.common .reward-value {
+            color: #ccc;
+        }
+
+        .reward-item.rare .reward-value {
+            color: #87ceeb;
+        }
+
+        .reward-item.epic .reward-value {
+            color: #daa5f5;
+        }
+
+        .reward-item.legendary .reward-value {
+            color: #ffcc80;
+        }
+
+        .reward-item.mythic .reward-value {
+            color: #ff8a80;
+        }
+
+        .spinner-container {
             width: 100%;
             height: 120px;
             overflow: hidden;
@@ -1044,13 +664,6 @@
             font-weight: 600;
         }
 
-        .prize-value {
-            font-size: 12px;
-            font-weight: 600;
-            color: #0088cc;
-            margin-top: 5px;
-        }
-
         @media (max-width: 480px) {
             .cases-grid {
                 grid-template-columns: 1fr;
@@ -1061,8 +674,219 @@
                 padding: 20px;
                 margin: 10px;
             }
+
+            .reward-item {
+                min-width: 70px;
+                width: 70px;
+                height: 90px;
+            }
         }
     </style>
+</head>
+<body>
+    <div class="header">
+        <div></div>
+        <div class="balance" id="balance">
+            <div class="balance-icon"></div>
+            <span>0.07 TON</span>
+        </div>
+    </div>
+
+    <div class="content">
+        <!-- Home Section -->
+        <div id="home-section">
+            <div class="cases-grid">
+                <div class="case-card trial" onclick="showCasePrizes('Trial Box')">
+                    <div class="case-title">Trial Box</div>
+                    <div class="case-price free">FREE</div>
+                    <div class="trial-badge">TRIAL</div>
+                </div>
+                <div class="case-card" onclick="showCasePrizes('Sweet Box')">
+                    <div class="case-title">Sweet Box</div>
+                    <div class="case-price">
+                        <div class="balance-icon"></div>
+                        5
+                    </div>
+                </div>
+                <div class="case-card" onclick="showCasePrizes('Star Box')">
+                    <div class="case-title">Star Box</div>
+                    <div class="case-price">
+                        <div class="balance-icon"></div>
+                        15
+                    </div>
+                </div>
+                <div class="case-card" onclick="showCasePrizes('Golden Case')">
+                    <div class="case-title">Golden Case</div>
+                    <div class="case-price">
+                        <div class="balance-icon"></div>
+                        35
+                    </div>
+                </div>
+                <div class="case-card" onclick="showCasePrizes('Premium Box')">
+                    <div class="case-title">Premium Box</div>
+                    <div class="case-price">
+                        <div class="balance-icon"></div>
+                        65
+                    </div>
+                </div>
+                <div class="case-card" onclick="showCasePrizes('Diamond Case')">
+                    <div class="case-title">Diamond Case</div>
+                    <div class="case-price">
+                        <div class="balance-icon"></div>
+                        100
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Section -->
+        <div id="profile-section" class="profile-section">
+            <div class="profile-header">
+                <h2>Profile</h2>
+            </div>
+            
+            <div class="wallet-section" id="wallet-section">
+               <div id="wallet-disconnected">
+                   <div style="font-size: 16px; margin-bottom: 15px; color: #888;">
+                       Connect your TON wallet
+                   </div>
+                   <button class="connect-btn" id="connect-wallet-btn">
+                       Connect Wallet
+                   </button>
+               </div>
+               
+               <div id="wallet-connected" style="display: none;">
+                   <div class="wallet-info">
+                       <div class="balance-icon" style="width: 20px; height: 20px;"></div>
+                       <div>
+                           <div style="font-size: 14px; font-weight: 600;">Connected</div>
+                           <div class="wallet-address" id="wallet-address">Loading...</div>
+                       </div>
+                   </div>
+                   <div class="ton-amount" id="wallet-balance">
+                       Loading...
+                   </div>
+                   <button class="disconnect-btn" id="disconnect-wallet-btn">
+                       Disconnect
+                   </button>
+               </div>
+               
+               <div style="margin-top: 20px;">
+                   <button class="deposit-btn" onclick="showDepositModal()">Manual Deposit</button>
+               </div>
+            </div>
+        </div>
+
+        <!-- Tasks Section -->
+        <div id="tasks-section" class="profile-section">
+            <div class="task-item">
+                <div class="task-info">
+                    <div class="task-title">Invite friends</div>
+                    <div class="task-description">Invite 20 people</div>
+                    <div class="task-progress">
+                        <div class="task-progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="task-progress-text">0/20 people subscribed to the channel</div>
+                </div>
+                <button class="share-btn" onclick="shareBot()">Share</button>
+            </div>
+            
+            <div class="task-item">
+                <div class="task-info">
+                    <div class="task-title">Subscribe on channel</div>
+                    <div class="task-description">Subscribe on channel</div>
+                    <div class="task-progress">
+                        <div class="task-progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="task-progress-text">0/1 subscription</div>
+                </div>
+                <button class="share-btn" onclick="openChannel()">Join</button>
+            </div>
+
+            <div class="task-item">
+                <div class="task-info">
+                    <div class="task-title">Open case</div>
+                    <div class="task-description">Open 10 cases</div>
+                    <div class="task-progress">
+                        <div class="task-progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="task-progress-text">0/10 cases</div>
+                </div>
+            </div>
+
+            <div class="task-item">
+                <div class="task-info">
+                    <div class="task-title">Deposit 1 ton</div>
+                    <div class="task-description">Deposit 1 ton</div>
+                    <div class="task-progress">
+                        <div class="task-progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="task-progress-text">0/1 TON</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('home')">
+            <span>Home</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('profile')">
+            <span>Profile</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('tasks')">
+            <span>Tasks</span>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div id="deposit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Deposit TON</div>
+            <div class="ton-address">UQDx5LBGp7K7A5hrYu4y6W5RPO4hwk5fL_LWzov0FlYeJMMp</div>
+            <button class="copy-btn" onclick="copyAddress()">Copy Address</button>
+            <button class="close-btn" onclick="closeDepositModal()">Close</button>
+        </div>
+    </div>
+
+    <!-- Case Prizes Modal -->
+    <div id="case-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title" id="case-title">Case Prizes</div>
+            
+            <!-- Rewards Horizontal Scroll Container -->
+            <div class="rewards-container">
+                <div class="rewards-scroll" id="rewards-scroll">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Spinner Container -->
+            <div id="spinner-container" class="spinner-container" style="display: none;">
+                <div class="spinner-pointer"></div>
+                <div class="spinner-track" id="spinner-track">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Spin Result -->
+            <div id="spin-result" class="spin-result">
+                <div class="result-title" id="result-title">You won!</div>
+                <div class="result-value" id="result-value">10 TON</div>
+            </div>
+            
+            <div id="spin-section">
+                <button class="spin-btn" id="spin-btn" onclick="startSpinWithWallet()">SPIN</button>
+                <div class="insufficient-funds" id="insufficient-funds" style="display: none;">
+                    Not enough TON to open this case
+                </div>
+                <div class="trial-notice" id="trial-notice" style="display: none;">
+                    This is a trial box! Prizes are not real and won't be added to your inventory.
+                </div>
+            </div>
+            <button class="close-btn" onclick="closeCaseModal()" style="margin-top: 20px;">Close</button>
+        </div>
+    </div>
 
     <script>
         // TON Connect initialization
@@ -1074,6 +898,72 @@
         let currentCaseName = '';
         let isSpinning = false;
         let isTrialCase = false;
+
+        // Case rewards data with rarities
+        const caseRewards = {
+            'Trial Box': [
+                { icon: '', value: '1 TON', rarity: 'common' },
+                { icon: '', value: '0.5 TON', rarity: 'common' },
+                { icon: '', value: '0.3 TON', rarity: 'common' },
+                { icon: '', value: '2 TON', rarity: 'rare' },
+                { icon: '', value: '1.5 TON', rarity: 'rare' },
+            ],
+            'Sweet Box': [
+                { icon: '', value: '10 TON', rarity: 'common' },
+                { icon: '', value: '8 TON', rarity: 'common' },
+                { icon: '', value: '5 TON', rarity: 'common' },
+                { icon: '', value: '15 TON', rarity: 'rare' },
+                { icon: '', value: '12 TON', rarity: 'rare' },
+                { icon: '', value: '25 TON', rarity: 'epic' },
+                { icon: '', value: '20 TON', rarity: 'epic' },
+            ],
+            'Star Box': [
+                { icon: '', value: '25 TON', rarity: 'common' },
+                { icon: '', value: '20 TON', rarity: 'common' },
+                { icon: '', value: '18 TON', rarity: 'common' },
+                { icon: '', value: '35 TON', rarity: 'rare' },
+                { icon: '', value: '30 TON', rarity: 'rare' },
+                { icon: '', value: '50 TON', rarity: 'epic' },
+                { icon: '', value: '45 TON', rarity: 'epic' },
+                { icon: '', value: '75 TON', rarity: 'legendary' },
+            ],
+            'Golden Case': [
+                { icon: '', value: '50 TON', rarity: 'common' },
+                { icon: '', value: '45 TON', rarity: 'common' },
+                { icon: '', value: '40 TON', rarity: 'common' },
+                { icon: '', value: '70 TON', rarity: 'rare' },
+                { icon: '', value: '65 TON', rarity: 'rare' },
+                { icon: '', value: '100 TON', rarity: 'epic' },
+                { icon: '', value: '90 TON', rarity: 'epic' },
+                { icon: '', value: '150 TON', rarity: 'legendary' },
+                { icon: '', value: '130 TON', rarity: 'legendary' },
+            ],
+            'Premium Box': [
+                { icon: '', value: '80 TON', rarity: 'common' },
+                { icon: '', value: '75 TON', rarity: 'common' },
+                { icon: '', value: '70 TON', rarity: 'common' },
+                { icon: '', value: '120 TON', rarity: 'rare' },
+                { icon: '', value: '110 TON', rarity: 'rare' },
+                { icon: '', value: '180 TON', rarity: 'epic' },
+                { icon: '', value: '160 TON', rarity: 'epic' },
+                { icon: '', value: '250 TON', rarity: 'legendary' },
+                { icon: '', value: '220 TON', rarity: 'legendary' },
+                { icon: '', value: '350 TON', rarity: 'mythic' },
+            ],
+            'Diamond Case': [
+                { icon: '', value: '10 TON', rarity: 'common' },
+                { icon: '', value: '20 TON', rarity: 'common' },
+                { icon: '', value: '30 TON', rarity: 'common' },
+                { icon: '', value: '50 TON', rarity: 'rare' },
+                { icon: '', value: '70 TON', rarity: 'rare' },
+                { icon: '', value: '90 TON', rarity: 'epic' },
+                { icon: '', value: '100 TON', rarity: 'epic' },
+                { icon: '', value: '120 TON', rarity: 'legendary' },
+                { icon: '', value: '130 TON', rarity: 'legendary' },
+                { icon: '', value: '150 TON', rarity: 'mythic' },
+                { icon: '', value: '200 TON', rarity: 'mythic' },
+            ]
+        };
 
         // Initialize TON Connect
         async function initTonConnect() {
@@ -1218,6 +1108,17 @@
             currentTab = tab;
         }
 
+        // Generate rewards HTML
+        function generateRewardsHTML(rewards) {
+            return rewards.map(reward => `
+                <div class="reward-item ${reward.rarity}">
+                    <div class="reward-rarity-corner"></div>
+                    <div class="reward-icon">${reward.icon}</div>
+                    <div class="reward-value">${reward.value}</div>
+                </div>
+            `).join('');
+        }
+
         // Show case prizes
         function showCasePrizes(caseName) {
             const caseTitleEl = document.getElementById('case-title');
@@ -1236,27 +1137,13 @@
             currentCaseName = caseName;
             isTrialCase = caseName === 'Trial Box';
 
-            // Sample prizes data
-            const prizes = [
-                { icon: '💰', value: '100 TON' },
-                { icon: '💎', value: '65 TON' },
-                { icon: '🏆', value: '35 TON' },
-                { icon: '🎁', value: '25 TON' },
-                { icon: '⭐', value: '15 TON' },
-                { icon: '🪙', value: '10 TON' },
-                { icon: '💰', value: '8 TON' },
-                { icon: '🎯', value: '5 TON' },
-                { icon: '🎪', value: '3 TON' }
-            ];
+            // Get rewards for this case
+            const rewards = caseRewards[caseName] || [];
 
-            const prizesContainer = document.getElementById('case-prizes');
-            if (prizesContainer) {
-                prizesContainer.innerHTML = prizes.map(prize => `
-                    <div class="prize-item">
-                        <div class="prize-icon">${prize.icon}</div>
-                        <div class="prize-value">${prize.value}</div>
-                    </div>
-                `).join('');
+            // Populate rewards scroll
+            const rewardsScrollEl = document.getElementById('rewards-scroll');
+            if (rewardsScrollEl) {
+                rewardsScrollEl.innerHTML = generateRewardsHTML(rewards);
             }
 
             const spinBtn = document.getElementById('spin-btn');
@@ -1291,7 +1178,7 @@
             const spinnerContainer = document.getElementById('spinner-container');
             const spinResult = document.getElementById('spin-result');
             const spinSection = document.getElementById('spin-section');
-            
+
             if (spinnerContainer) spinnerContainer.style.display = 'none';
             if (spinResult) {
                 spinResult.classList.remove('show');
@@ -1328,45 +1215,34 @@
         // Start spin animation
         function startSpin() {
             if (isSpinning) return;
-            
+
             isSpinning = true;
-            
+
             // Deduct balance only if not trial case
             if (!isTrialCase) {
                 userBalance -= currentCasePrice;
                 updateBalanceDisplay();
             }
-            
-            // Hide spin button and show spinner
+
+            // Hide spin button and rewards, show spinner
             const spinSection = document.getElementById('spin-section');
             const spinnerContainer = document.getElementById('spinner-container');
-            
+            const rewardsContainer = document.querySelector('.rewards-container');
+
             if (spinSection) spinSection.style.display = 'none';
+            if (rewardsContainer) rewardsContainer.style.display = 'none';
             if (spinnerContainer) spinnerContainer.style.display = 'block';
-            
-            // Generate spinner items
-            const spinnerTrack = document.getElementById('spinner-track');
-            const prizes = [
-                { value: '100 TON', icon: '💰' },
-                { value: '65 TON', icon: '💎' },
-                { value: '35 TON', icon: '🏆' },
-                { value: '25 TON', icon: '🎁' },
-                { value: '15 TON', icon: '⭐' },
-                { value: '10 TON', icon: '🪙' },
-                { value: '8 TON', icon: '💰' },
-                { value: '5 TON', icon: '🎯' },
-                { value: '3 TON', icon: '🎪' },
-                { value: '2 TON', icon: '🎲' },
-                { value: '1 TON', icon: '🎊' },
-                { value: '0.5 TON', icon: '🎈' }
-            ];
-            
-            // Create multiple sets of prizes for continuous spinning
+
+            // Get current case rewards
+            const rewards = caseRewards[currentCaseName] || [];
+
+            // Generate spinner items (multiple sets for continuous spinning)
             const spinnerItems = [];
             for (let i = 0; i < 5; i++) {
-                spinnerItems.push(...prizes);
+                spinnerItems.push(...rewards);
             }
-            
+
+            const spinnerTrack = document.getElementById('spinner-track');
             if (spinnerTrack) {
                 spinnerTrack.innerHTML = spinnerItems.map(prize => `
                     <div class="spinner-item">
@@ -1375,16 +1251,15 @@
                     </div>
                 `).join('');
             }
-            
+
             // Calculate winning position
-            const winnerIndex = Math.floor(Math.random() * prizes.length);
-            const winnerValue = prizes[winnerIndex].value;
-            const winnerIcon = prizes[winnerIndex].icon;
+            const winnerIndex = Math.floor(Math.random() * rewards.length);
+            const winner = rewards[winnerIndex];
 
             // Calculate spin distance
             const itemWidth = 110;
             const totalWidth = itemWidth * spinnerItems.length;
-            const finalPosition = -(totalWidth - itemWidth * (winnerIndex + prizes.length * 2 + 5));
+            const finalPosition = -(totalWidth - itemWidth * (winnerIndex + rewards.length * 2 + 5));
 
             // Start spinning animation
             if (spinnerTrack) {
@@ -1395,7 +1270,7 @@
             setTimeout(() => {
                 // Mark winner
                 const allItems = document.querySelectorAll('.spinner-item');
-                const targetIndex = winnerIndex + prizes.length * 2 + 5;
+                const targetIndex = winnerIndex + rewards.length * 2 + 5;
                 if (allItems[targetIndex]) {
                     allItems[targetIndex].classList.add('winner-item');
                 }
@@ -1403,7 +1278,7 @@
                 // Show result
                 setTimeout(() => {
                     if (spinnerContainer) spinnerContainer.style.display = 'none';
-                    
+
                     const resultDiv = document.getElementById('spin-result');
                     const resultTitle = document.getElementById('result-title');
                     const resultValue = document.getElementById('result-value');
@@ -1415,10 +1290,13 @@
                             resultTitle.textContent = 'Trial Result (Not Real)';
                         }
                     } else {
-                        if (resultTitle) resultTitle.textContent = 'You won!';
+                        if (resultTitle) {
+                            resultTitle.classList.remove('trial');
+                            resultTitle.textContent = 'You won!';
+                        }
                     }
 
-                    if (resultValue) resultValue.textContent = `${winnerIcon} ${winnerValue}`;
+                    if (resultValue) resultValue.textContent = `${winner.icon} ${winner.value}`;
                     if (resultDiv) resultDiv.classList.add('show');
 
                     isSpinning = false;
