@@ -475,110 +475,80 @@
             overflow-y: auto;
         }
 
-        /* Rewards Grid */
+        /* Rewards Grid - Single Row */
         .rewards-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
+            display: flex;
             gap: 10px;
             margin-bottom: 20px;
+            overflow-x: auto;
+            padding: 10px 0;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .rewards-grid::-webkit-scrollbar {
+            display: none;
         }
 
         .reward-card {
-            background: #1a1a1a;
+            min-width: 100px;
+            width: 100px;
+            height: 130px;
+            background: #111;
             border-radius: 12px;
             padding: 15px;
             text-align: center;
             position: relative;
-            border: 2px solid transparent;
+            border: 1px solid #222;
             transition: all 0.3s ease;
+            flex-shrink: 0;
         }
 
-        .reward-card.common {
-            border-color: #888;
-            background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%);
-        }
-
-        .reward-card.rare {
-            border-color: #0088cc;
-            background: linear-gradient(135deg, #003366 0%, #001a33 100%);
-        }
-
-        .reward-card.epic {
-            border-color: #8b5cf6;
-            background: linear-gradient(135deg, #4c1d95 0%, #2d1b69 100%);
-        }
-
+        .reward-card.common,
+        .reward-card.rare,
+        .reward-card.epic,
         .reward-card.legendary {
-            border-color: #ff9800;
-            background: linear-gradient(135deg, #ff6f00 0%, #e65100 100%);
+            border-color: #222;
+            background: #111;
         }
 
         .reward-card.mythic {
-            border-color: #ff1744;
-            background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+            border-color: #ff9800;
+            background: #111;
+            box-shadow: 0 0 15px rgba(255, 152, 0, 0.2);
         }
 
         .reward-percentage {
             position: absolute;
-            top: 8px;
-            right: 8px;
+            top: 6px;
+            right: 6px;
             background: rgba(0, 0, 0, 0.8);
             color: #fff;
             font-size: 10px;
             font-weight: 600;
-            padding: 2px 6px;
-            border-radius: 10px;
-        }
-
-        .reward-card.common .reward-percentage {
-            background: rgba(136, 136, 136, 0.9);
-        }
-
-        .reward-card.rare .reward-percentage {
-            background: rgba(0, 136, 204, 0.9);
-        }
-
-        .reward-card.epic .reward-percentage {
-            background: rgba(139, 92, 246, 0.9);
-        }
-
-        .reward-card.legendary .reward-percentage {
-            background: rgba(255, 152, 0, 0.9);
+            padding: 2px 5px;
+            border-radius: 8px;
         }
 
         .reward-card.mythic .reward-percentage {
-            background: rgba(255, 23, 68, 0.9);
+            background: rgba(255, 152, 0, 0.9);
+            color: #000;
         }
 
         .reward-icon {
-            font-size: 32px;
-            margin: 10px 0;
+            font-size: 36px;
+            margin: 15px 0 10px 0;
         }
 
         .reward-value {
             font-size: 14px;
             font-weight: 600;
-            color: #fff;
-        }
-
-        .reward-card.common .reward-value {
             color: #ccc;
-        }
-
-        .reward-card.rare .reward-value {
-            color: #87ceeb;
-        }
-
-        .reward-card.epic .reward-value {
-            color: #daa5f5;
-        }
-
-        .reward-card.legendary .reward-value {
-            color: #ffcc80;
+            line-height: 1.2;
         }
 
         .reward-card.mythic .reward-value {
-            color: #ff8a80;
+            color: #ffcc80;
         }
 
         .unwrap-section {
@@ -644,14 +614,7 @@
         }
 
         .insufficient-funds {
-            background: rgba(255, 68, 68, 0.2);
-            border: 1px solid #ff4444;
-            color: #ff4444;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 14px;
-            margin-bottom: 15px;
-            text-align: center;
+            display: none !important;
         }
 
         @keyframes fadeIn {
@@ -669,10 +632,6 @@
         }
 
         @media (max-width: 480px) {
-            .rewards-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            
             .case-tabs {
                 padding: 2px;
             }
@@ -681,11 +640,25 @@
                 padding: 10px 15px;
                 font-size: 13px;
             }
+
+            .reward-card {
+                min-width: 90px;
+                width: 90px;
+                height: 120px;
+            }
+
+            .reward-icon {
+                font-size: 32px;
+            }
+
+            .reward-value {
+                font-size: 13px;
+            }
         }
     </style>
 </head>
 <body>
-	<div class="header">
+    <div class="header">
     <div></div>
     <div class="balance" id="balance">
         <div class="balance-icon"></div>
@@ -752,7 +725,7 @@
         <div class="profile-header">
             <h2>Profile</h2>
         </div>
-
+        
         <div class="wallet-section" id="wallet-section">
            <div id="wallet-disconnected">
                <div style="font-size: 16px; margin-bottom: 15px; color: #888;">
@@ -762,7 +735,7 @@
                    Connect Wallet
                </button>
            </div>
-
+           
            <div id="wallet-connected" style="display: none;">
                <div class="wallet-info">
                    <div class="balance-icon" style="width: 20px; height: 20px;"></div>
@@ -778,7 +751,7 @@
                    Disconnect
                </button>
            </div>
-
+           
            <div style="margin-top: 20px;">
                <button class="deposit-btn" onclick="showDepositModal()">Manual Deposit</button>
            </div>
@@ -798,7 +771,7 @@
             </div>
             <button class="share-btn" onclick="shareBot()">Share</button>
         </div>
-
+        
         <div class="task-item">
             <div class="task-info">
                 <div class="task-title">Subscribe on channel</div>
@@ -861,24 +834,20 @@
 <div id="case-bottom-sheet" class="bottom-sheet">
     <div class="bottom-sheet-content">
         <div class="bottom-sheet-header">
-            <div class="bottom-sheet-title" id="sheet-title">Dark Gift</div>
+            <div class="bottom-sheet-title" id="sheet-title">Gift Box</div>
             <button class="close-sheet-btn" onclick="closeCaseBottomSheet()">×</button>
         </div>
-
+        
         <div class="bottom-sheet-body">
             <div id="trial-notice" class="trial-notice" style="display: none;">
                 This is a trial box! Prizes are not real and won't be added to your inventory.
-            </div>
-
-            <div id="insufficient-funds" class="insufficient-funds" style="display: none;">
-                Not enough TON to open this case
             </div>
 
             <div class="rewards-grid" id="rewards-grid">
                 <!-- Will be populated by JavaScript -->
             </div>
         </div>
-
+        
         <div class="unwrap-section">
             <button class="unwrap-btn" id="unwrap-btn" onclick="startSpinWithWallet()">
                 <div class="price-icon"></div>
@@ -900,54 +869,48 @@
     let isTrialCase = false;
     let currentFilter = 'all';
 
-    // Case rewards data with rarities and percentages
+    // Case rewards data with rarities and percentages - only top 4-5 rewards per case
     const caseRewards = {
         'Trial Box': [
-            { icon: '🏆', value: '1 TON', rarity: 'common', percentage: '40%' },
-            { icon: '💎', value: '0.5 TON', rarity: 'common', percentage: '30%' },
-            { icon: '🌸', value: '2 TON', rarity: 'rare', percentage: '20%' },
-            { icon: '💍', value: '3 TON', rarity: 'epic', percentage: '8%' },
-            { icon: '📦', value: '5 TON', rarity: 'legendary', percentage: '2%' },
+            { icon: '🏆', value: '1 TON', rarity: 'common', percentage: '50%' },
+            { icon: '💎', value: '2 TON', rarity: 'common', percentage: '30%' },
+            { icon: '🌸', value: '3 TON', rarity: 'rare', percentage: '15%' },
+            { icon: '📦', value: '10 TON', rarity: 'mythic', percentage: '5%' },
         ],
         'Sweet Box': [
-            { icon: '🏆', value: '10 TON', rarity: 'common', percentage: '35%' },
-            { icon: '💎', value: '8 TON', rarity: 'common', percentage: '25%' },
-            { icon: '🌸', value: '15 TON', rarity: 'rare', percentage: '20%' },
-            { icon: '💍', value: '25 TON', rarity: 'epic', percentage: '15%' },
-            { icon: '📦', value: '50 TON', rarity: 'legendary', percentage: '4%' },
-            { icon: '👑', value: '100 TON', rarity: 'mythic', percentage: '1%' },
+            { icon: '🏆', value: '10 TON', rarity: 'common', percentage: '40%' },
+            { icon: '💎', value: '15 TON', rarity: 'common', percentage: '30%' },
+            { icon: '🌸', value: '25 TON', rarity: 'rare', percentage: '20%' },
+            { icon: '📦', value: '50 TON', rarity: 'legendary', percentage: '8%' },
+            { icon: '👑', value: '100 TON', rarity: 'mythic', percentage: '2%' },
         ],
         'Star Box': [
-            { icon: '🏆', value: '25 TON', rarity: 'common', percentage: '30%' },
-            { icon: '💎', value: '20 TON', rarity: 'common', percentage: '25%' },
-            { icon: '🌸', value: '35 TON', rarity: 'rare', percentage: '20%' },
-            { icon: '💍', value: '50 TON', rarity: 'epic', percentage: '15%' },
-            { icon: '📦', value: '75 TON', rarity: 'legendary', percentage: '8%' },
-            { icon: '👑', value: '150 TON', rarity: 'mythic', percentage: '2%' },
+            { icon: '🏆', value: '25 TON', rarity: 'common', percentage: '35%' },
+            { icon: '💎', value: '35 TON', rarity: 'common', percentage: '25%' },
+            { icon: '🌸', value: '50 TON', rarity: 'rare', percentage: '20%' },
+            { icon: '💍', value: '75 TON', rarity: 'epic', percentage: '15%' },
+            { icon: '👑', value: '150 TON', rarity: 'mythic', percentage: '5%' },
         ],
         'Golden Case': [
-            { icon: '🏆', value: '50 TON', rarity: 'common', percentage: '25%' },
-            { icon: '💎', value: '45 TON', rarity: 'common', percentage: '20%' },
-            { icon: '🌸', value: '70 TON', rarity: 'rare', percentage: '20%' },
-            { icon: '💍', value: '100 TON', rarity: 'epic', percentage: '15%' },
-            { icon: '📦', value: '150 TON', rarity: 'legendary', percentage: '15%' },
-            { icon: '👑', value: '300 TON', rarity: 'mythic', percentage: '5%' },
+            { icon: '🏆', value: '50 TON', rarity: 'common', percentage: '30%' },
+            { icon: '💎', value: '70 TON', rarity: 'common', percentage: '25%' },
+            { icon: '🌸', value: '100 TON', rarity: 'rare', percentage: '20%' },
+            { icon: '💍', value: '150 TON', rarity: 'epic', percentage: '15%' },
+            { icon: '👑', value: '300 TON', rarity: 'mythic', percentage: '10%' },
         ],
         'Premium Box': [
-            { icon: '🏆', value: '80 TON', rarity: 'common', percentage: '20%' },
-            { icon: '💎', value: '75 TON', rarity: 'common', percentage: '20%' },
-            { icon: '🌸', value: '120 TON', rarity: 'rare', percentage: '20%' },
-            { icon: '💍', value: '180 TON', rarity: 'epic', percentage: '20%' },
-            { icon: '📦', value: '250 TON', rarity: 'legendary', percentage: '15%' },
-            { icon: '👑', value: '500 TON', rarity: 'mythic', percentage: '5%' },
+            { icon: '🏆', value: '80 TON', rarity: 'common', percentage: '25%' },
+            { icon: '💎', value: '120 TON', rarity: 'common', percentage: '25%' },
+            { icon: '🌸', value: '180 TON', rarity: 'rare', percentage: '20%' },
+            { icon: '💍', value: '250 TON', rarity: 'epic', percentage: '20%' },
+            { icon: '👑', value: '500 TON', rarity: 'mythic', percentage: '10%' },
         ],
         'Diamond Case': [
-            { icon: '🏆', value: '120 TON', rarity: 'common', percentage: '15%' },
-            { icon: '💎', value: '100 TON', rarity: 'common', percentage: '15%' },
-            { icon: '🌸', value: '150 TON', rarity: 'rare', percentage: '20%' },
-            { icon: '💍', value: '200 TON', rarity: 'epic', percentage: '20%' },
-            { icon: '📦', value: '350 TON', rarity: 'legendary', percentage: '20%' },
-            { icon: '👑', value: '1000 TON', rarity: 'mythic', percentage: '10%' },
+            { icon: '🏆', value: '150 TON', rarity: 'common', percentage: '20%' },
+            { icon: '💎', value: '200 TON', rarity: 'common', percentage: '20%' },
+            { icon: '🌸', value: '350 TON', rarity: 'rare', percentage: '20%' },
+            { icon: '💍', value: '500 TON', rarity: 'epic', percentage: '20%' },
+            { icon: '👑', value: '1000 TON', rarity: 'mythic', percentage: '20%' },
         ]
     };
 
@@ -1069,7 +1032,7 @@
     // Filter cases
     function filterCases(category) {
         currentFilter = category;
-
+        
         // Update active tab
         document.querySelectorAll('.case-tab').forEach(tab => {
             tab.classList.remove('active');
@@ -1131,7 +1094,7 @@
     // Show case prizes in bottom sheet
     function showCasePrizes(caseName) {
         const sheetTitle = document.getElementById('sheet-title');
-        if (sheetTitle) sheetTitle.textContent = caseName;
+        if (sheetTitle) sheetTitle.textContent = 'Gift Box';
 
         currentCasePrice = casePrices[caseName];
         currentCaseName = caseName;
@@ -1147,7 +1110,6 @@
         }
 
         const unwrapBtn = document.getElementById('unwrap-btn');
-        const insufficientFunds = document.getElementById('insufficient-funds');
         const trialNotice = document.getElementById('trial-notice');
 
         if (isTrialCase) {
@@ -1156,23 +1118,14 @@
                 unwrapBtn.innerHTML = '<span>Try for Free</span>';
                 unwrapBtn.classList.add('trial');
             }
-            if (insufficientFunds) insufficientFunds.style.display = 'none';
             if (trialNotice) trialNotice.style.display = 'block';
         } else {
             if (unwrapBtn) {
                 unwrapBtn.classList.remove('trial');
-                if (userBalance >= currentCasePrice) {
-                    unwrapBtn.disabled = false;
-                    unwrapBtn.innerHTML = `
-                        <div class="price-icon"></div>
-                        <span>Unwrap Gift for ${currentCasePrice}</span>
-                    `;
-                    if (insufficientFunds) insufficientFunds.style.display = 'none';
-                } else {
-                    unwrapBtn.disabled = true;
-                    unwrapBtn.innerHTML = '<span>Insufficient Funds</span>';
-                    if (insufficientFunds) insufficientFunds.style.display = 'block';
-                }
+                unwrapBtn.disabled = userBalance < currentCasePrice;
+                unwrapBtn.innerHTML = unwrapBtn.disabled ? 
+                    '<span>Insufficient Funds</span>' :
+                    `<div class="price-icon"></div><span>Unwrap Gift for ${currentCasePrice}</span>`;
             }
             if (trialNotice) trialNotice.style.display = 'none';
         }
