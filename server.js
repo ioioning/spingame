@@ -1,4 +1,4 @@
-// server.js - Fixed version
+// server.js - Fixed version with proper TON Connect support
 
 const TelegramBot = require('node-telegram-bot-api');
 const express = require('express');
@@ -6,6 +6,7 @@ const sqlite3 = require('sqlite3').verbose();
 const axios = require('axios');
 const crypto = require('crypto');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 // Configuration
@@ -14,7 +15,7 @@ const WEBAPP_URL = process.env.WEBAPP_URL || 'https://ioioning.github.io/spingam
 const TON_API_KEY = process.env.TON_API_KEY;
 const CHANNEL_ID = process.env.CHANNEL_ID || '@openingcases';
 const PORT = process.env.PORT || 3000;
-const REAL_TON_WALLET = process.env.TON_WALLET_ADDRESS;
+const REAL_TON_WALLET = process.env.TON_WALLET_ADDRESS || 'UQDx5LBGp7K7A5hrYu4y6W5RPO4hwk5fL_LWzov0FlYeJMMp';
 
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 const app = express();
@@ -24,33 +25,23 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// Serve TON Connect manifest
+app.get('/tonconnect-manifest.json', (req, res) => {
+    const manifest = {
+        url: WEBAPP_URL,
+        name: "GrandSpin Bot",
+        iconUrl: `${WEBAPP_URL}icon.png`,
+        termsOfUseUrl: `${WEBAPP_URL}terms`,
+        privacyPolicyUrl: `${WEBAPP_URL}privacy`
+    };
+    res.json(manifest);
+});
+
 // Generate unique wallet address for user
 function generateWalletAddress(userId) {
     const hash = crypto.createHash('sha256').update(userId + 'grandspin_salt').digest('hex');
     return 'UQ' + hash.substring(0, 46);
 }
-
-// Remove the problematic code blocks that were causing the error
-// These lines were using undefined variables:
-// const depositInfo = ...
-// bot.sendMessage(chatId, depositInfo, { parse_mode: 'Markdown' });
-
-bot.onText(/\/deposit/, (msg) => {
-    const userId = msg.from.id;
-    const chatId = msg.chat.id;
-    
-    // Используем реальный кошелек вместо генерированного
-    const walletAddress = REAL_TON_WALLET;
-    const depositComment = userId;
-
-    const depositInfo =
-        `*Replenishment*\n\n` +
-        `Send TON to this address:\n\`${walletAddress}\`\n\n` +
-        `In the comment to the payment, insert:\n\`${depositComment}\`\n\n` +
-        `*Important:* The comment must be ONLY:\n\`${depositComment}\``;
-
-    bot.sendMessage(chatId, depositInfo, { parse_mode: 'Markdown' });
-});
 
 // Database initialization
 const db = new sqlite3.Database('bot.db');
@@ -209,30 +200,163 @@ bot.onText(/\/start(.*)/, async (msg, match) => {
                             db.run('INSERT INTO transactions (user_id, type, amount, status) VALUES (?, ?, ?, ?)',
                                    [referralCode, 'referral_bonus', 0.1, 'confirmed']);
                             
-                            bot.sendMessage(referralCode, 'You received 0.1 TON for inviting a friend!');
+                            bot.sendMessage(referralCode, '✅ You received 0.1 TON for inviting a friend!');
                         }
                     });
                 }
             });
         }
 
-// В bot.onText(/\/start(.*)/, замените клавиатуру на:
-const keyboard = {
-    inline_keyboard: [
-        [{ text: ' Connect Wallet', web_app: { url: `${WEBAPP_URL}?tab=connect` } }],
-        [{ text: ' Open App', web_app: { url: WEBAPP_URL } }]
-    ]
-};
-        bot.sendMessage(chatId, 
-            `Welcome to GrandSpin Bot!\n\n` +
-            `Open cases and get cool NFT gifts!\n\n` +
-            `Free trial case available\n` +
-            `Complete tasks and get bonuses\n` +
-            `Invite friends and earn TON`,
-            { reply_markup: keyboard }
-        );
+        // Send welcome message with improved keyboard
+        const keyboard = {
+            inline_keyboard: [
+                [{ text: '🎮 Open App', web_app: { url: WEBAPP_URL } }],
+                [{ text: '💰 Connect Wallet', web_app: { url: `${WEBAPP_URL}?tab=profile` } }]
+            ]
+        };
+
+        const welcomeText = 
+            `🎲 Welcome to GrandSpin Bot!\n\n` +
+            `🎁 Open cases and get cool NFT gifts!\n` +
+            `🆓 Free trial case available\n` +
+            `✅ Complete tasks and get bonuses\n` +
+            `👥 Invite friends and earn TON\n\n` +
+            `Tap "Open App" to start playing!`;
+
+        bot.sendMessage(chatId, welcomeText, { reply_markup: keyboard });
     });
 });
+
+// Deposit command
+bot.onText(/\/deposit/, (msg) => {
+    const userId = msg.from.id.toString();
+    const chatId = msg.chat.id;
+    
+    const walletAddress = REAL_TON_WALLET;
+    const depositComment = userId;
+
+    const depositInfo = 
+        `💰 *Deposit TON*\n\n` +
+        `📤 Send TON to this address:\n\`${walletAddress}\`\n\n` +
+        `💬 Comment for payment:\n\`${depositComment}\`\n\n` +
+        `⚠️ *Important:* The comment must be exactly:\n\`${depositComment}\`\n\n` +
+        `✅ After sending, use /check_deposit to verify your payment.`;
+
+    bot.sendMessage(chatId, depositInfo, { 
+        parse_mode: 'Markdown',
+        reply_markup: {
+            inline_keyboard: [
+                [{ text: '🔍 Check Deposit', callback_data: 'check_deposit' }],
+                [{ text: '🎮 Open App', web_app: { url: WEBAPP_URL } }]
+            ]
+        }
+    });
+});
+
+// Check deposit command
+bot.onText(/\/check_deposit/, async (msg) => {
+    const userId = msg.from.id.toString();
+    const chatId = msg.chat.id;
+
+    bot.sendMessage(chatId, '🔍 Checking for recent transactions...');
+
+    try {
+        const transaction = await checkTonTransaction(userId, 0.01);
+        
+        if (transaction) {
+            // Check if already processed
+            db.get('SELECT * FROM transactions WHERE tx_hash = ?', [transaction.hash], (err, existingTx) => {
+                if (err) {
+                    bot.sendMessage(chatId, '❌ Database error occurred.');
+                    return;
+                }
+                
+                if (existingTx) {
+                    bot.sendMessage(chatId, '⚠️ This transaction has already been processed.');
+                    return;
+                }
+                
+                // Update user balance
+                db.run('UPDATE users SET balance = balance + ?, total_deposited = total_deposited + ? WHERE telegram_id = ?', 
+                       [transaction.amount, transaction.amount, userId], (err) => {
+                    if (err) {
+                        bot.sendMessage(chatId, '❌ Failed to update balance.');
+                        return;
+                    }
+                    
+                    // Record transaction
+                    db.run('INSERT INTO transactions (user_id, type, amount, tx_hash, status) VALUES (?, ?, ?, ?, ?)',
+                           [userId, 'deposit', transaction.amount, transaction.hash, 'confirmed']);
+                    
+                    bot.sendMessage(chatId, 
+                        `✅ *Deposit Confirmed!*\n\n` +
+                        `💰 Amount: ${transaction.amount} TON\n` +
+                        `🔗 Transaction: \`${transaction.hash.slice(0, 16)}...\`\n\n` +
+                        `Your balance has been updated!`, 
+                        { parse_mode: 'Markdown' }
+                    );
+                });
+            });
+        } else {
+            bot.sendMessage(chatId, 
+                `❌ No recent transactions found.\n\n` +
+                `Make sure you:\n` +
+                `• Sent to the correct address\n` +
+                `• Used the exact comment: \`${userId}\`\n` +
+                `• Wait a few minutes after sending`, 
+                { parse_mode: 'Markdown' }
+            );
+        }
+    } catch (error) {
+        console.error('Error checking deposit:', error);
+        bot.sendMessage(chatId, '❌ Error checking transactions. Please try again later.');
+    }
+});
+
+// Callback query handler
+bot.on('callback_query', async (callbackQuery) => {
+    const message = callbackQuery.message;
+    const data = callbackQuery.data;
+    const userId = callbackQuery.from.id.toString();
+
+    if (data === 'check_deposit') {
+        // Trigger deposit check
+        bot.sendMessage(message.chat.id, '🔍 Checking for recent transactions...');
+        
+        try {
+            const transaction = await checkTonTransaction(userId, 0.01);
+            
+            if (transaction) {
+                // Process transaction (same logic as above)
+                db.get('SELECT * FROM transactions WHERE tx_hash = ?', [transaction.hash], (err, existingTx) => {
+                    if (!err && !existingTx) {
+                        db.run('UPDATE users SET balance = balance + ?, total_deposited = total_deposited + ? WHERE telegram_id = ?', 
+                               [transaction.amount, transaction.amount, userId], (err) => {
+                            if (!err) {
+                                db.run('INSERT INTO transactions (user_id, type, amount, tx_hash, status) VALUES (?, ?, ?, ?, ?)',
+                                       [userId, 'deposit', transaction.amount, transaction.hash, 'confirmed']);
+                                
+                                bot.sendMessage(message.chat.id, 
+                                    `✅ *Deposit Confirmed!*\n\n💰 Amount: ${transaction.amount} TON`, 
+                                    { parse_mode: 'Markdown' }
+                                );
+                            }
+                        });
+                    }
+                });
+            } else {
+                bot.sendMessage(message.chat.id, '❌ No recent transactions found.');
+            }
+        } catch (error) {
+            bot.sendMessage(message.chat.id, '❌ Error checking transactions.');
+        }
+    }
+
+    // Answer callback query to remove loading state
+    bot.answerCallbackQuery(callbackQuery.id);
+});
+
+// API Endpoints
 
 // Get user data
 app.get('/api/user/:userId', (req, res) => {
@@ -351,8 +475,9 @@ app.post('/api/create-deposit', (req, res) => {
             
             res.json({
                 success: true,
-                walletAddress: user.wallet_address,
-                amount: amount
+                walletAddress: REAL_TON_WALLET,
+                amount: amount,
+                comment: userId
             });
         });
     });
@@ -389,19 +514,52 @@ app.post('/api/open-case', (req, res) => {
             return res.status(400).json({ error: 'Insufficient balance' });
         }
         
-        // Generate random prize
-        const prizes = [
-            { name: 'Diamond NFT', value: 100, chance: 0.001 },
-            { name: 'Golden Trophy', value: 65, chance: 0.002 },
-            { name: 'Star Gift', value: 35, chance: 0.005 },
-            { name: 'Premium Box', value: 25, chance: 0.01 },
-            { name: 'Sweet Candy', value: 15, chance: 0.05 },
-            { name: 'Party Gift', value: 10, chance: 0.1 },
-            { name: 'Fire Token', value: 8, chance: 0.15 },
-            { name: 'Magic Star', value: 5, chance: 0.2 },
-            { name: 'Lucky Charm', value: 3, chance: 0.25 },
-            { name: 'Sparkle', value: 1, chance: 0.213 }
-        ];
+        // Generate random prize based on case
+        const casePrizes = {
+            'Trial Box': [
+                { name: 'Lucky Token', value: 1, chance: 0.5 },
+                { name: 'Silver Star', value: 2, chance: 0.3 },
+                { name: 'Golden Gift', value: 5, chance: 0.15 },
+                { name: 'Diamond Box', value: 10, chance: 0.05 }
+            ],
+            'Sweet Box': [
+                { name: 'Sweet Candy', value: 10, chance: 0.4 },
+                { name: 'Sugar Crystal', value: 15, chance: 0.3 },
+                { name: 'Honey Drop', value: 25, chance: 0.2 },
+                { name: 'Golden Candy', value: 50, chance: 0.08 },
+                { name: 'Rainbow Sweet', value: 100, chance: 0.02 }
+            ],
+            'Star Box': [
+                { name: 'Shooting Star', value: 25, chance: 0.35 },
+                { name: 'Bright Star', value: 35, chance: 0.25 },
+                { name: 'Golden Star', value: 50, chance: 0.2 },
+                { name: 'Diamond Star', value: 75, chance: 0.15 },
+                { name: 'Cosmic Star', value: 150, chance: 0.05 }
+            ],
+            'Golden Case': [
+                { name: 'Golden Coin', value: 50, chance: 0.3 },
+                { name: 'Golden Ring', value: 70, chance: 0.25 },
+                { name: 'Golden Crown', value: 100, chance: 0.2 },
+                { name: 'Golden Scepter', value: 150, chance: 0.15 },
+                { name: 'Golden Throne', value: 300, chance: 0.1 }
+            ],
+            'Premium Box': [
+                { name: 'Premium Token', value: 80, chance: 0.25 },
+                { name: 'Premium Gem', value: 120, chance: 0.25 },
+                { name: 'Premium Crystal', value: 180, chance: 0.2 },
+                { name: 'Premium Diamond', value: 250, chance: 0.2 },
+                { name: 'Premium Artifact', value: 500, chance: 0.1 }
+            ],
+            'Diamond Case': [
+                { name: 'Diamond Shard', value: 150, chance: 0.2 },
+                { name: 'Diamond Crystal', value: 200, chance: 0.2 },
+                { name: 'Diamond Gem', value: 350, chance: 0.2 },
+                { name: 'Diamond Crown', value: 500, chance: 0.2 },
+                { name: 'Diamond Empire', value: 1000, chance: 0.2 }
+            ]
+        };
+        
+        const prizes = casePrizes[caseName] || casePrizes['Trial Box'];
         
         const random = Math.random();
         let cumulativeChance = 0;
@@ -500,7 +658,7 @@ app.post('/api/check-subscription', async (req, res) => {
 // Get referral link
 app.get('/api/referral/:userId', (req, res) => {
     const userId = req.params.userId;
-    const referralLink = `https://t.me/YourBotUsername?start=${userId}`;
+    const referralLink = `https://t.me/@GrandSpinBot?start=${userId}`;
     
     res.json({ referralLink });
 });
@@ -641,11 +799,66 @@ app.post('/api/claim-task', (req, res) => {
     });
 });
 
+// Process TON Connect transaction
+app.post('/api/process-transaction', async (req, res) => {
+    const { userId, transactionHash, amount } = req.body;
+    
+    if (!userId || !transactionHash || !amount) {
+        return res.status(400).json({ error: 'Missing required parameters' });
+    }
+    
+    try {
+        // Verify transaction exists and is valid
+        const response = await axios.get(`https://tonapi.io/v2/transactions/${transactionHash}`, {
+            headers: { 'Authorization': `Bearer ${TON_API_KEY}` }
+        });
+        
+        const transaction = response.data;
+        if (transaction && transaction.out_msgs && transaction.out_msgs.length > 0) {
+            const outMsg = transaction.out_msgs[0];
+            if (outMsg.destination && outMsg.destination.address === REAL_TON_WALLET) {
+                const txAmount = parseInt(outMsg.value) / 1e9;
+                
+                if (Math.abs(txAmount - amount) < 0.001) { // Allow small differences due to fees
+                    // Check if already processed
+                    db.get('SELECT * FROM transactions WHERE tx_hash = ?', [transactionHash], (err, existingTx) => {
+                        if (err || existingTx) {
+                            return res.status(400).json({ error: 'Transaction already processed' });
+                        }
+                        
+                        // Process the transaction
+                        db.run('UPDATE users SET balance = balance + ? WHERE telegram_id = ?', [txAmount, userId], (err) => {
+                            if (err) {
+                                return res.status(500).json({ error: 'Failed to update balance' });
+                            }
+                            
+                            // Record transaction
+                            db.run('INSERT INTO transactions (user_id, type, amount, tx_hash, status) VALUES (?, ?, ?, ?, ?)',
+                                   [userId, 'tonconnect_payment', txAmount, transactionHash, 'confirmed']);
+                            
+                            res.json({ success: true, amount: txAmount });
+                        });
+                    });
+                } else {
+                    res.status(400).json({ error: 'Transaction amount mismatch' });
+                }
+            } else {
+                res.status(400).json({ error: 'Invalid transaction destination' });
+            }
+        } else {
+            res.status(400).json({ error: 'Invalid transaction' });
+        }
+    } catch (error) {
+        console.error('Error processing transaction:', error);
+        res.status(500).json({ error: 'Failed to verify transaction' });
+    }
+});
+
 // Periodic deposit checker
 setInterval(async () => {
     console.log('Checking for pending deposits...');
     
-    db.all('SELECT DISTINCT user_id, wallet_address FROM pending_deposits WHERE created_at > datetime("now", "-1 hour")', [], async (err, deposits) => {
+    db.all('SELECT DISTINCT user_id FROM pending_deposits WHERE created_at > datetime("now", "-1 hour")', [], async (err, deposits) => {
         if (err) {
             console.error('Error fetching pending deposits:', err);
             return;
@@ -700,6 +913,7 @@ app.use((err, req, res, next) => {
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`WebApp URL: ${WEBAPP_URL}`);
+    console.log(`TON Connect manifest: ${WEBAPP_URL}tonconnect-manifest.json`);
     console.log(`Bot Token: ${BOT_TOKEN ? 'Set' : 'Missing'}`);
 });
 

@@ -725,7 +725,7 @@
         <div class="profile-header">
             <h2>Profile</h2>
         </div>
-        
+
         <div class="wallet-section" id="wallet-section">
            <div id="wallet-disconnected">
                <div style="font-size: 16px; margin-bottom: 15px; color: #888;">
@@ -735,7 +735,7 @@
                    Connect Wallet
                </button>
            </div>
-           
+
            <div id="wallet-connected" style="display: none;">
                <div class="wallet-info">
                    <div class="balance-icon" style="width: 20px; height: 20px;"></div>
@@ -751,7 +751,7 @@
                    Disconnect
                </button>
            </div>
-           
+
            <div style="margin-top: 20px;">
                <button class="deposit-btn" onclick="showDepositModal()">Manual Deposit</button>
            </div>
@@ -771,7 +771,7 @@
             </div>
             <button class="share-btn" onclick="shareBot()">Share</button>
         </div>
-        
+
         <div class="task-item">
             <div class="task-info">
                 <div class="task-title">Subscribe on channel</div>
@@ -837,7 +837,7 @@
             <div class="bottom-sheet-title" id="sheet-title">Gift Box</div>
             <button class="close-sheet-btn" onclick="closeCaseBottomSheet()">×</button>
         </div>
-        
+
         <div class="bottom-sheet-body">
             <div id="trial-notice" class="trial-notice" style="display: none;">
                 This is a trial box! Prizes are not real and won't be added to your inventory.
@@ -847,7 +847,7 @@
                 <!-- Will be populated by JavaScript -->
             </div>
         </div>
-        
+
         <div class="unwrap-section">
             <button class="unwrap-btn" id="unwrap-btn" onclick="startSpinWithWallet()">
                 <div class="price-icon"></div>
@@ -856,7 +856,7 @@
         </div>
     </div>
 </div>
-
+</body>
 <script>
     // TON Connect initialization
     let tonConnectUI;
@@ -924,14 +924,42 @@
         'Diamond Case': 100
     };
 
-    // Initialize TON Connect
+    // Initialize TON Connect with proper manifest URL
     async function initTonConnect() {
         try {
-            tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
-                manifestUrl: 'https://raw.githubusercontent.com/ton-community/tutorials/main/03-client/test/public/tonconnect-manifest.json'
+            // Create a proper manifest object
+            const manifest = {
+                url: window.location.origin,
+                name: "GrandSpin Bot",
+                iconUrl: window.location.origin + "/icon.png",
+                termsOfUseUrl: window.location.origin + "/terms",
+                privacyPolicyUrl: window.location.origin + "/privacy"
+            };
+
+tonConnectUI = new TON_CONNECT_UI.TonConnectUI({
+  manifestUrl: './tonconnect-manifest.json',
+  buttonRootId: null,
+  uiPreferences: { theme: 'DARK' }
+});
+
+                walletsListConfiguration: {
+                    includeWallets: [
+                        {
+                            name: 'Tonkeeper',
+                            aboutUrl: 'https://tonkeeper.com',
+                            bridgeUrl: 'https://bridge.tonapi.io/bridge',
+                            universalLink: 'https://app.tonkeeper.com/ton-connect',
+                            jsBridgeKey: 'tonkeeper',
+                            appName: 'GrandSpin',
+                            platforms: ['chrome', 'android', 'ios']
+                        }
+                    ]
+                }
             });
 
+            // Listen for wallet status changes
             tonConnectUI.onStatusChange((wallet) => {
+                console.log('Wallet status changed:', wallet);
                 if (wallet) {
                     connectedWallet = wallet;
                     updateWalletUI(true);
@@ -942,17 +970,29 @@
                 }
             });
 
+            // Connect button handler
             const connectBtn = document.getElementById('connect-wallet-btn');
             if (connectBtn) {
-                connectBtn.addEventListener('click', () => {
-                    tonConnectUI.openModal();
+                connectBtn.addEventListener('click', async () => {
+                    try {
+                        console.log('Opening wallet connection modal...');
+                        await tonConnectUI.openModal();
+                    } catch (error) {
+                        console.error('Error opening connection modal:', error);
+                        alert('Error connecting wallet: ' + error.message);
+                    }
                 });
             }
 
+            // Disconnect button handler
             const disconnectBtn = document.getElementById('disconnect-wallet-btn');
             if (disconnectBtn) {
-                disconnectBtn.addEventListener('click', () => {
-                    tonConnectUI.disconnect();
+                disconnectBtn.addEventListener('click', async () => {
+                    try {
+                        await tonConnectUI.disconnect();
+                    } catch (error) {
+                        console.error('Error disconnecting:', error);
+                    }
                 });
             }
 
@@ -991,6 +1031,8 @@
             const balanceEl = document.getElementById('wallet-balance');
             if (balanceEl) balanceEl.textContent = 'Loading...';
 
+            // Here you would make an actual API call to get balance
+            // For now, we'll simulate
             setTimeout(() => {
                 if (balanceEl) balanceEl.textContent = '0.00 TON';
             }, 1000);
@@ -1009,6 +1051,8 @@
         }
 
         try {
+            console.log('Sending transaction for amount:', amount);
+
             const transaction = {
                 validUntil: Math.floor(Date.now() / 1000) + 300,
                 messages: [
@@ -1021,6 +1065,7 @@
             };
 
             const result = await tonConnectUI.sendTransaction(transaction);
+            console.log('Transaction result:', result);
             return result;
         } catch (error) {
             console.error('Transaction failed:', error);
@@ -1032,7 +1077,7 @@
     // Filter cases
     function filterCases(category) {
         currentFilter = category;
-        
+
         // Update active tab
         document.querySelectorAll('.case-tab').forEach(tab => {
             tab.classList.remove('active');
@@ -1123,7 +1168,7 @@
             if (unwrapBtn) {
                 unwrapBtn.classList.remove('trial');
                 unwrapBtn.disabled = userBalance < currentCasePrice;
-                unwrapBtn.innerHTML = unwrapBtn.disabled ? 
+                unwrapBtn.innerHTML = unwrapBtn.disabled ?
                     '<span>Insufficient Funds</span>' :
                     `<div class="price-icon"></div><span>Unwrap Gift for ${currentCasePrice}</span>`;
             }
@@ -1234,21 +1279,19 @@
 
     // Initialize the app
     document.addEventListener('DOMContentLoaded', function() {
+        console.log('App initializing...');
+
+        // Initialize TON Connect after a short delay
         setTimeout(() => {
             initTonConnect();
-        }, 100);
+        }, 1000);
 
         switchTab('home');
 
         if (window.Telegram && window.Telegram.WebApp) {
             window.Telegram.WebApp.ready();
             window.Telegram.WebApp.expand();
+            console.log('Telegram WebApp initialized');
         }
     });
 </script>
-    <script>
-        // Placeholder for JavaScript from Part 2
-        console.log("Ready for Part 2 JavaScript");
-    </script>
-</body>
-</html>
