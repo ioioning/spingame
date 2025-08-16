@@ -101,6 +101,27 @@
             cursor: pointer;
             transition: all 0.3s ease;
             border: 2px solid transparent;
+            position: relative;
+            min-height: 120px;
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+        }
+
+        .case-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.7) 0%, rgba(26, 26, 26, 0.8) 100%);
+            z-index: 1;
+        }
+
+        .case-card > * {
+            position: relative;
+            z-index: 2;
         }
 
         .case-card:hover {
@@ -108,9 +129,40 @@
             transform: translateY(-2px);
         }
 
+        /* Специальные классы для кейсов с изображениями */
         .case-card.trial {
             border-color: #ff9800;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2a1a00 100%);
+            background: linear-gradient(135deg, rgba(26, 26, 26, 0.8) 0%, rgba(42, 26, 0, 0.8) 100%);
+            /* Вставьте сюда ссылку на изображение Trial Box:
+            background-image: url('https://i.imgur.com/YOUR_TRIAL_IMAGE.jpg'); */
+        }
+
+        .case-card.trial::before {
+            background: linear-gradient(135deg, rgba(255, 152, 0, 0.2) 0%, rgba(42, 26, 0, 0.7) 100%);
+        }
+
+        .case-card.sweet-box {
+            /* Вставьте сюда ссылку на изображение Sweet Box:
+            background-image: url('https://i.imgur.com/YOUR_SWEET_BOX_IMAGE.jpg'); */
+        }
+
+        .case-card.star-box {
+            /* Вставьте сюда ссылку на изображение Star Box:
+            background-image: url('https://i.imgur.com/YOUR_STAR_BOX_IMAGE.jpg'); */
+        }
+
+        .case-card.golden-case {
+            /* Вставьте сюда ссылку на изображение Golden Case:
+            background-image: url('https://i.imgur.com/YOUR_GOLDEN_CASE_IMAGE.jpg'); */
+        }
+
+        .case-card.premium-box {
+            /* Вставьте сюда ссылку на изображение Premium Box:
+            background-image: url('https://i.imgur.com/YOUR_PREMIUM_BOX_IMAGE.jpg'); */
+        }
+
+        .case-card.diamond-case {
+            background-image: url('https://i.imgur.com/VvHq2a2.jpg');
         }
 
         .case-card.trial:hover {
@@ -137,6 +189,7 @@
             font-size: 16px;
             font-weight: 600;
             margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
         }
 
         .case-price {
@@ -147,6 +200,7 @@
             align-items: center;
             justify-content: center;
             gap: 5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
         }
 
         .case-price.free {
@@ -411,424 +465,427 @@
             font-size: 16px;
             cursor: pointer;
         }
-
-        /* New Bottom Sheet Modal */
-        .bottom-sheet {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
-            justify-content: center;
-            align-items: flex-end;
-        }
-
-        .bottom-sheet.show {
-            display: flex;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .bottom-sheet-content {
-            background: #000;
-            width: 100%;
-            max-height: 85vh;
-            border-radius: 20px 20px 0 0;
-            overflow: hidden;
-            transform: translateY(100%);
-            animation: slideUp 0.3s ease forwards;
-        }
-
-        .bottom-sheet-header {
-            padding: 20px;
-            border-bottom: 1px solid #333;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .bottom-sheet-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: #fff;
-        }
-
-        .close-sheet-btn {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: #333;
-            border: none;
-            color: #fff;
-            font-size: 18px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .bottom-sheet-body {
-            padding: 20px;
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-
-        /* Rewards Grid - Single Row */
-        .rewards-grid {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            overflow-x: auto;
-            padding: 10px 0;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-
-        .rewards-grid::-webkit-scrollbar {
-            display: none;
-        }
-
-        .reward-card {
-            min-width: 100px;
-            width: 100px;
-            height: 130px;
-            background: #111;
-            border-radius: 12px;
-            padding: 15px;
-            text-align: center;
-            position: relative;
-            border: 1px solid #222;
-            transition: all 0.3s ease;
-            flex-shrink: 0;
-        }
-
-        .reward-card.common,
-        .reward-card.rare,
-        .reward-card.epic,
-        .reward-card.legendary {
-            border-color: #222;
-            background: #111;
-        }
-
-        .reward-card.mythic {
-            border-color: #ff9800;
-            background: #111;
-            box-shadow: 0 0 15px rgba(255, 152, 0, 0.2);
-        }
-
-        .reward-percentage {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            background: rgba(0, 0, 0, 0.8);
-            color: #fff;
-            font-size: 10px;
-            font-weight: 600;
-            padding: 2px 5px;
-            border-radius: 8px;
-        }
-
-        .reward-card.mythic .reward-percentage {
-            background: rgba(255, 152, 0, 0.9);
-            color: #000;
-        }
-
-        .reward-icon {
-            font-size: 36px;
-            margin: 15px 0 10px 0;
-        }
-
-        .reward-value {
-            font-size: 14px;
-            font-weight: 600;
-            color: #ccc;
-            line-height: 1.2;
-        }
-
-        .reward-card.mythic .reward-value {
-            color: #ffcc80;
-        }
-
-        .unwrap-section {
-            padding: 20px;
-            border-top: 1px solid #333;
-            background: #111;
-        }
-
-        .unwrap-btn {
-            width: 100%;
-            background: linear-gradient(135deg, #0088cc, #00aaff);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 25px;
-            font-size: 18px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .unwrap-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 136, 204, 0.4);
-        }
-
-        .unwrap-btn:disabled {
-            background: #555;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        .unwrap-btn.trial {
-            background: linear-gradient(135deg, #ff9800, #ffc107);
-            color: #000;
-        }
-
-        .unwrap-btn.trial:hover {
-            box-shadow: 0 8px 20px rgba(255, 152, 0, 0.4);
-        }
-
-        .price-icon {
-            width: 20px;
-            height: 20px;
-            background: #fff;
-            border-radius: 50%;
-        }
-
-        .trial-notice {
-            background: rgba(255, 152, 0, 0.2);
-            border: 1px solid #ff9800;
-            color: #ff9800;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 14px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-
-        .insufficient-funds {
-            display: none !important;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideUp {
-            from { transform: translateY(100%); }
-            to { transform: translateY(0); }
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        @media (max-width: 480px) {
-            .case-tabs {
-                padding: 2px;
-            }
-            
-            .case-tab {
-                padding: 10px 15px;
-                font-size: 13px;
-            }
-
-            .reward-card {
-                min-width: 90px;
-                width: 90px;
-                height: 120px;
-            }
-
-            .reward-icon {
-                font-size: 32px;
-            }
-
-            .reward-value {
-                font-size: 13px;
-            }
-        }
     </style>
 </head>
 <body>
     <div class="header">
-    <div></div>
-    <div class="balance" id="balance">
-        <div class="balance-icon"></div>
-        <span>0.07 TON</span>
-    </div>
-</div>
-
-<div class="content">
-    <!-- Home Section -->
-    <div id="home-section">
-        <!-- Case Tabs -->
-        <div class="case-tabs">
-            <div class="case-tab active" onclick="filterCases('all')">All Gift</div>
-            <div class="case-tab" onclick="filterCases('limited')">Limited</div>
-            <div class="case-tab" onclick="filterCases('regular')">Regular</div>
-        </div>
-
-        <div class="cases-grid">
-            <div class="case-card trial" data-category="limited" onclick="showCasePrizes('Trial Box')">
-                <div class="case-title">Trial Box</div>
-                <div class="case-price free">FREE</div>
-                <div class="trial-badge">TRIAL</div>
-            </div>
-            <div class="case-card" data-category="regular" onclick="showCasePrizes('Sweet Box')">
-                <div class="case-title">Sweet Box</div>
-                <div class="case-price">
-                    <div class="balance-icon"></div>
-                    5
-                </div>
-            </div>
-            <div class="case-card" data-category="regular" onclick="showCasePrizes('Star Box')">
-                <div class="case-title">Star Box</div>
-                <div class="case-price">
-                    <div class="balance-icon"></div>
-                    15
-                </div>
-            </div>
-            <div class="case-card" data-category="limited" onclick="showCasePrizes('Golden Case')">
-                <div class="case-title">Golden Case</div>
-                <div class="case-price">
-                    <div class="balance-icon"></div>
-                    35
-                </div>
-            </div>
-            <div class="case-card" data-category="regular" onclick="showCasePrizes('Premium Box')">
-                <div class="case-title">Premium Box</div>
-                <div class="case-price">
-                    <div class="balance-icon"></div>
-                    65
-                </div>
-            </div>
-            <div class="case-card" data-category="limited" onclick="showCasePrizes('Diamond Case')">
-                <div class="case-title">Diamond Case</div>
-                <div class="case-price">
-                    <div class="balance-icon"></div>
-                    100
-                </div>
-            </div>
+        <div></div>
+        <div class="balance" id="balance">
+            <div class="balance-icon"></div>
+            <span>0.07 TON</span>
         </div>
     </div>
 
-    <!-- Profile Section -->
-    <div id="profile-section" class="profile-section">
-        <div class="profile-header">
-            <h2>Profile</h2>
+    <div class="content">
+        <!-- Home Section -->
+        <div id="home-section">
+            <!-- Case Tabs -->
+            <div class="case-tabs">
+                <div class="case-tab active" onclick="filterCases('all')">All Gift</div>
+                <div class="case-tab" onclick="filterCases('limited')">Limited</div>
+                <div class="case-tab" onclick="filterCases('regular')">Regular</div>
+            </div>
+
+            <div class="cases-grid">
+                <div class="case-card trial" data-category="limited" onclick="showCasePrizes('Trial Box')">
+                    <div class="case-title">Trial Box</div>
+                    <div class="case-price free">FREE</div>
+                    <div class="trial-badge">TRIAL</div>
+                </div>
+                <div class="case-card sweet-box" data-category="regular" onclick="showCasePrizes('Sweet Box')">
+                    <div class="case-title">Sweet Box</div>
+                    <div class="case-price">
+                        <div class="balance-icon"></div>
+                        5
+                    </div>
+                </div>
+                <div class="case-card star-box" data-category="regular" onclick="showCasePrizes('Star Box')">
+                    <div class="case-title">Star Box</div>
+                    <div class="case-price">
+                        <div class="balance-icon"></div>
+                        15
+                    </div>
+                </div>
+                <div class="case-card golden-case" data-category="limited" onclick="showCasePrizes('Golden Case')">
+                    <div class="case-title">Golden Case</div>
+                    <div class="case-price">
+                        <div class="balance-icon"></div>
+                        35
+                    </div>
+                </div>
+                <div class="case-card premium-box" data-category="regular" onclick="showCasePrizes('Premium Box')">
+                    <div class="case-title">Premium Box</div>
+                    <div class="case-price">
+                        <div class="balance-icon"></div>
+                        65
+                    </div>
+                </div>
+                <div class="case-card diamond-case" data-category="limited" onclick="showCasePrizes('Diamond Case')">
+                    <div class="case-title">Diamond Case</div>
+                    <div class="case-price">
+                        <div class="balance-icon"></div>
+                        100
+                    </div>
+                </div>
+            </div>
         </div>
-        
-        <div class="wallet-section" id="wallet-section">
-           <div id="wallet-disconnected">
-               <div style="font-size: 16px; margin-bottom: 15px; color: #888;">
-                   Connect your TON wallet
-               </div>
-               <button class="connect-btn" id="connect-wallet-btn">
-                   Connect Wallet
-               </button>
-           </div>
-           
-           <div id="wallet-connected" style="display: none;">
-               <div class="wallet-info">
-                   <div class="balance-icon" style="width: 20px; height: 20px;"></div>
-                   <div>
-                       <div style="font-size: 14px; font-weight: 600;">Connected</div>
-                       <div class="wallet-address" id="wallet-address">Loading...</div>
+
+        <!-- Profile Section -->
+        <div id="profile-section" class="profile-section">
+            <div class="profile-header">
+                <h2>Profile</h2>
+            </div>
+            
+            <div class="wallet-section" id="wallet-section">
+               <div id="wallet-disconnected">
+                   <div style="font-size: 16px; margin-bottom: 15px; color: #888;">
+                       Connect your TON wallet
                    </div>
+                   <button class="connect-btn" id="connect-wallet-btn">
+                       Connect Wallet
+                   </button>
                </div>
-               <div class="ton-amount" id="wallet-balance">
-                   Loading...
+               
+               <div id="wallet-connected" style="display: none;">
+                   <div class="wallet-info">
+                       <div class="balance-icon" style="width: 20px; height: 20px;"></div>
+                       <div>
+                           <div style="font-size: 14px; font-weight: 600;">Connected</div>
+                           <div class="wallet-address" id="wallet-address">Loading...</div>
+                       </div>
+                   </div>
+                   <div class="ton-amount" id="wallet-balance">
+                       Loading...
+                   </div>
+                   <button class="disconnect-btn" id="disconnect-wallet-btn">
+                       Disconnect
+                   </button>
                </div>
-               <button class="disconnect-btn" id="disconnect-wallet-btn">
-                   Disconnect
-               </button>
-           </div>
-           
-           <div style="margin-top: 20px;">
-               <button class="deposit-btn" onclick="showDepositModal()">Manual Deposit</button>
-           </div>
+               
+               <div style="margin-top: 20px;">
+                   <button class="deposit-btn" onclick="showDepositModal()">Manual Deposit</button>
+               </div>
+            </div>
+        </div>
+
+        <!-- Tasks Section -->
+        <div id="tasks-section" class="profile-section">
+            <div class="task-item">
+                <div class="task-info">
+                    <div class="task-title">Invite friends</div>
+                    <div class="task-description">Invite 20 people</div>
+                    <div class="task-progress">
+                        <div class="task-progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="task-progress-text">0/20 people subscribed to the channel</div>
+                </div>
+                <button class="share-btn" onclick="shareBot()">Share</button>
+            </div>
+            
+            <div class="task-item">
+                <div class="task-info">
+                    <div class="task-title">Subscribe on channel</div>
+                    <div class="task-description">Subscribe on channel</div>
+                    <div class="task-progress">
+                        <div class="task-progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="task-progress-text">0/1 subscription</div>
+                </div>
+                <button class="share-btn" onclick="openChannel()">Join</button>
+            </div>
+
+            <div class="task-item">
+                <div class="task-info">
+                    <div class="task-title">Open case</div>
+                    <div class="task-description">Open 10 cases</div>
+                    <div class="task-progress">
+                        <div class="task-progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="task-progress-text">0/10 cases</div>
+                </div>
+            </div>
+
+            <div class="task-item">
+                <div class="task-info">
+                    <div class="task-title">Deposit 1 ton</div>
+                    <div class="task-description">Deposit 1 ton</div>
+                    <div class="task-progress">
+                        <div class="task-progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="task-progress-text">0/1 TON</div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Tasks Section -->
-    <div id="tasks-section" class="profile-section">
-        <div class="task-item">
-            <div class="task-info">
-                <div class="task-title">Invite friends</div>
-                <div class="task-description">Invite 20 people</div>
-                <div class="task-progress">
-                    <div class="task-progress-fill" style="width: 0%"></div>
-                </div>
-                <div class="task-progress-text">0/20 people subscribed to the channel</div>
-            </div>
-            <button class="share-btn" onclick="shareBot()">Share</button>
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('home')">
+            <span>Home</span>
         </div>
+        <div class="nav-item" onclick="switchTab('profile')">
+            <span>Profile</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('tasks')">
+            <span>Tasks</span>
+        </div>
+    </div>
+
+    <!-- Deposit Modal -->
+    <div id="deposit-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Deposit TON</div>
+            <div class="ton-address">UQDx5LBGp7K7A5hrYu4y6W5RPO4hwk5fL_LWzov0FlYeJMMp</div>
+            <button class="copy-btn" onclick="copyAddress()">Copy Address</button>
+            <button class="close-btn" onclick="closeDepositModal()">Close</button>
+        </div>
+    </div>
+<!-- ПРОДОЛЖЕНИЕ КОДА ИЗ ЧАСТИ 1 -->
+
+<style>
+    /* Продолжение стилей для модалей и анимаций */
+    .bottom-sheet {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 2000;
+        justify-content: center;
+        align-items: flex-end;
+    }
+
+    .bottom-sheet.show {
+        display: flex;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .bottom-sheet-content {
+        background: #000;
+        width: 100%;
+        max-height: 85vh;
+        border-radius: 20px 20px 0 0;
+        overflow: hidden;
+        transform: translateY(100%);
+        animation: slideUp 0.3s ease forwards;
+    }
+
+    .bottom-sheet-header {
+        padding: 20px;
+        border-bottom: 1px solid #333;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .bottom-sheet-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .close-sheet-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #333;
+        border: none;
+        color: #fff;
+        font-size: 18px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .bottom-sheet-body {
+        padding: 20px;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+
+    /* Rewards Grid - Single Row */
+    .rewards-grid {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        overflow-x: auto;
+        padding: 10px 0;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .rewards-grid::-webkit-scrollbar {
+        display: none;
+    }
+
+    .reward-card {
+        min-width: 100px;
+        width: 100px;
+        height: 130px;
+        background: #111;
+        border-radius: 12px;
+        padding: 15px;
+        text-align: center;
+        position: relative;
+        border: 1px solid #222;
+        transition: all 0.3s ease;
+        flex-shrink: 0;
+    }
+
+    .reward-card.common,
+    .reward-card.rare,
+    .reward-card.epic,
+    .reward-card.legendary {
+        border-color: #222;
+        background: #111;
+    }
+
+    .reward-card.mythic {
+        border-color: #ff9800;
+        background: #111;
+        box-shadow: 0 0 15px rgba(255, 152, 0, 0.2);
+    }
+
+    .reward-percentage {
+        position: absolute;
+        top: 6px;
+        right: 6px;
+        background: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 600;
+        padding: 2px 5px;
+        border-radius: 8px;
+    }
+
+    .reward-card.mythic .reward-percentage {
+        background: rgba(255, 152, 0, 0.9);
+        color: #000;
+    }
+
+    .reward-icon {
+        font-size: 36px;
+        margin: 15px 0 10px 0;
+    }
+
+    .reward-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: #ccc;
+        line-height: 1.2;
+    }
+
+    .reward-card.mythic .reward-value {
+        color: #ffcc80;
+    }
+
+    .unwrap-section {
+        padding: 20px;
+        border-top: 1px solid #333;
+        background: #111;
+    }
+
+    .unwrap-btn {
+        width: 100%;
+        background: linear-gradient(135deg, #0088cc, #00aaff);
+        color: white;
+        border: none;
+        padding: 16px;
+        border-radius: 25px;
+        font-size: 18px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .unwrap-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0, 136, 204, 0.4);
+    }
+
+    .unwrap-btn:disabled {
+        background: #555;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .unwrap-btn.trial {
+        background: linear-gradient(135deg, #ff9800, #ffc107);
+        color: #000;
+    }
+
+    .unwrap-btn.trial:hover {
+        box-shadow: 0 8px 20px rgba(255, 152, 0, 0.4);
+    }
+
+    .price-icon {
+        width: 20px;
+        height: 20px;
+        background: #fff;
+        border-radius: 50%;
+    }
+
+    .trial-notice {
+        background: rgba(255, 152, 0, 0.2);
+        border: 1px solid #ff9800;
+        color: #ff9800;
+        padding: 12px;
+        border-radius: 10px;
+        font-size: 14px;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+
+    .insufficient-funds {
+        display: none !important;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    @keyframes slideUp {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+
+    .hidden {
+        display: none;
+    }
+
+    @media (max-width: 480px) {
+        .case-tabs {
+            padding: 2px;
+        }
         
-        <div class="task-item">
-            <div class="task-info">
-                <div class="task-title">Subscribe on channel</div>
-                <div class="task-description">Subscribe on channel</div>
-                <div class="task-progress">
-                    <div class="task-progress-fill" style="width: 0%"></div>
-                </div>
-                <div class="task-progress-text">0/1 subscription</div>
-            </div>
-            <button class="share-btn" onclick="openChannel()">Join</button>
-        </div>
+        .case-tab {
+            padding: 10px 15px;
+            font-size: 13px;
+        }
 
-        <div class="task-item">
-            <div class="task-info">
-                <div class="task-title">Open case</div>
-                <div class="task-description">Open 10 cases</div>
-                <div class="task-progress">
-                    <div class="task-progress-fill" style="width: 0%"></div>
-                </div>
-                <div class="task-progress-text">0/10 cases</div>
-            </div>
-        </div>
+        .reward-card {
+            min-width: 90px;
+            width: 90px;
+            height: 120px;
+        }
 
-        <div class="task-item">
-            <div class="task-info">
-                <div class="task-title">Deposit 1 ton</div>
-                <div class="task-description">Deposit 1 ton</div>
-                <div class="task-progress">
-                    <div class="task-progress-fill" style="width: 0%"></div>
-                </div>
-                <div class="task-progress-text">0/1 TON</div>
-            </div>
-        </div>
-    </div>
-</div>
+        .reward-icon {
+            font-size: 32px;
+        }
 
-<div class="bottom-nav">
-    <div class="nav-item active" onclick="switchTab('home')">
-        <span>Home</span>
-    </div>
-    <div class="nav-item" onclick="switchTab('profile')">
-        <span>Profile</span>
-    </div>
-    <div class="nav-item" onclick="switchTab('tasks')">
-        <span>Tasks</span>
-    </div>
-</div>
-
-<!-- Deposit Modal -->
-<div id="deposit-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-title">Deposit TON</div>
-        <div class="ton-address">UQDx5LBGp7K7A5hrYu4y6W5RPO4hwk5fL_LWzov0FlYeJMMp</div>
-        <button class="copy-btn" onclick="copyAddress()">Copy Address</button>
-        <button class="close-btn" onclick="closeDepositModal()">Close</button>
-    </div>
-</div>
+        .reward-value {
+            font-size: 13px;
+        }
+    }
+</style>
 
 <!-- Bottom Sheet Modal -->
 <div id="case-bottom-sheet" class="bottom-sheet">
@@ -1246,9 +1303,5 @@
         }
     });
 </script>
-    <script>
-        // Placeholder for JavaScript from Part 2
-        console.log("Ready for Part 2 JavaScript");
-    </script>
 </body>
 </html>
