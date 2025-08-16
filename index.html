@@ -96,32 +96,25 @@
         .case-card {
             background: #1a1a1a;
             border-radius: 15px;
-            padding: 20px;
+            padding: 0;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
             border: 2px solid transparent;
             position: relative;
-            min-height: 120px;
+            min-height: 140px;
             background-size: cover;
             background-position: center;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
         }
 
-        .case-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(26, 26, 26, 0.7) 0%, rgba(26, 26, 26, 0.8) 100%);
-            z-index: 1;
-        }
-
-        .case-card > * {
-            position: relative;
-            z-index: 2;
+        .case-card-content {
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.7) 50%, transparent 100%);
+            padding: 15px;
+            border-radius: 0 0 15px 15px;
         }
 
         .case-card:hover {
@@ -132,18 +125,16 @@
         /* Специальные классы для кейсов с изображениями */
         .case-card.trial {
             border-color: #ff9800;
-            background: linear-gradient(135deg, rgba(26, 26, 26, 0.8) 0%, rgba(42, 26, 0, 0.8) 100%);
             /* Вставьте сюда ссылку на изображение Trial Box:
             background-image: url('https://i.imgur.com/YOUR_TRIAL_IMAGE.jpg'); */
         }
 
-        .case-card.trial::before {
-            background: linear-gradient(135deg, rgba(255, 152, 0, 0.2) 0%, rgba(42, 26, 0, 0.7) 100%);
+        .case-card.trial .case-card-content {
+            background: linear-gradient(to top, rgba(255, 152, 0, 0.9) 0%, rgba(255, 152, 0, 0.6) 50%, transparent 100%);
         }
 
         .case-card.sweet-box {
-            /* Вставьте сюда ссылку на изображение Sweet Box:
-            background-image: url('https://i.imgur.com/YOUR_SWEET_BOX_IMAGE.jpg'); */
+            background-image: url('https://i.imgur.com/VvHq2a2.jpg'); 
         }
 
         .case-card.star-box {
@@ -162,7 +153,8 @@
         }
 
         .case-card.diamond-case {
-            background-image: url('https://i.imgur.com/VvHq2a2.jpg');
+            /* Вставьте сюда ссылку на изображение Diamond Case:
+            background-image: url('https://i.imgur.com/YOUR_DIAMOND_CASE_IMAGE.jpg'); */
         }
 
         .case-card.trial:hover {
@@ -488,43 +480,55 @@
 
             <div class="cases-grid">
                 <div class="case-card trial" data-category="limited" onclick="showCasePrizes('Trial Box')">
-                    <div class="case-title">Trial Box</div>
-                    <div class="case-price free">FREE</div>
-                    <div class="trial-badge">TRIAL</div>
+                    <div class="case-card-content">
+                        <div class="case-title">Trial Box</div>
+                        <div class="case-price free">FREE</div>
+                        <div class="trial-badge">TRIAL</div>
+                    </div>
                 </div>
                 <div class="case-card sweet-box" data-category="regular" onclick="showCasePrizes('Sweet Box')">
-                    <div class="case-title">Sweet Box</div>
-                    <div class="case-price">
-                        <div class="balance-icon"></div>
-                        5
+                    <div class="case-card-content">
+                        <div class="case-title">Sweet Box</div>
+                        <div class="case-price">
+                            <div class="balance-icon"></div>
+                            5
+                        </div>
                     </div>
                 </div>
                 <div class="case-card star-box" data-category="regular" onclick="showCasePrizes('Star Box')">
-                    <div class="case-title">Star Box</div>
-                    <div class="case-price">
-                        <div class="balance-icon"></div>
-                        15
+                    <div class="case-card-content">
+                        <div class="case-title">Star Box</div>
+                        <div class="case-price">
+                            <div class="balance-icon"></div>
+                            15
+                        </div>
                     </div>
                 </div>
                 <div class="case-card golden-case" data-category="limited" onclick="showCasePrizes('Golden Case')">
-                    <div class="case-title">Golden Case</div>
-                    <div class="case-price">
-                        <div class="balance-icon"></div>
-                        35
+                    <div class="case-card-content">
+                        <div class="case-title">Golden Case</div>
+                        <div class="case-price">
+                            <div class="balance-icon"></div>
+                            35
+                        </div>
                     </div>
                 </div>
                 <div class="case-card premium-box" data-category="regular" onclick="showCasePrizes('Premium Box')">
-                    <div class="case-title">Premium Box</div>
-                    <div class="case-price">
-                        <div class="balance-icon"></div>
-                        65
+                    <div class="case-card-content">
+                        <div class="case-title">Premium Box</div>
+                        <div class="case-price">
+                            <div class="balance-icon"></div>
+                            65
+                        </div>
                     </div>
                 </div>
                 <div class="case-card diamond-case" data-category="limited" onclick="showCasePrizes('Diamond Case')">
-                    <div class="case-title">Diamond Case</div>
-                    <div class="case-price">
-                        <div class="balance-icon"></div>
-                        100
+                    <div class="case-card-content">
+                        <div class="case-title">Diamond Case</div>
+                        <div class="case-price">
+                            <div class="balance-icon"></div>
+                            100
+                        </div>
                     </div>
                 </div>
             </div>
@@ -639,8 +643,8 @@
             <button class="close-btn" onclick="closeDepositModal()">Close</button>
         </div>
     </div>
-<!-- ПРОДОЛЖЕНИЕ КОДА ИЗ ЧАСТИ 1 -->
 
+    <!-- ПРОДОЛЖЕНИЕ КОДА БУДЕТ ВО ВТОРОЙ ЧАСТИ -->
 <style>
     /* Продолжение стилей для модалей и анимаций */
     .bottom-sheet {
