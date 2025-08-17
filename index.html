@@ -453,6 +453,264 @@
             font-size: 16px;
             cursor: pointer;
         }
+
+        /* Bottom Sheet Styles */
+        .bottom-sheet {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: flex-end;
+        }
+
+        .bottom-sheet.show {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .bottom-sheet-content {
+            background: #000;
+            width: 100%;
+            max-height: 85vh;
+            border-radius: 20px 20px 0 0;
+            overflow: hidden;
+            transform: translateY(100%);
+            animation: slideUp 0.3s ease forwards;
+        }
+
+        .bottom-sheet-header {
+            padding: 20px;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .bottom-sheet-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .close-sheet-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #333;
+            border: none;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bottom-sheet-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        /* Rewards Grid - Увеличенные иконки для фото */
+        .rewards-grid {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding: 10px 0;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        .rewards-grid::-webkit-scrollbar {
+            display: none;
+        }
+
+        .reward-card {
+            min-width: 120px;
+            width: 120px;
+            height: 160px;
+            background: #111;
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+            border: 1px solid #222;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+        }
+
+        .reward-card.common,
+        .reward-card.rare,
+        .reward-card.epic,
+        .reward-card.legendary {
+            border-color: #222;
+            background: #111;
+        }
+
+        .reward-card.mythic {
+            border-color: #ff9800;
+            background: #111;
+            box-shadow: 0 0 15px rgba(255, 152, 0, 0.2);
+        }
+
+        .reward-percentage {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.8);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 6px;
+            border-radius: 8px;
+            z-index: 2;
+        }
+
+        .reward-card.mythic .reward-percentage {
+            background: rgba(255, 152, 0, 0.9);
+            color: #000;
+        }
+
+        /* Увеличенная область для фото */
+        .reward-image {
+            width: 80px;
+            height: 80px;
+            margin: 10px auto 15px auto;
+            border-radius: 10px;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-color: #333;
+            border: 2px solid #444;
+        }
+
+        .reward-card.mythic .reward-image {
+            border-color: #ff9800;
+        }
+
+        .reward-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ccc;
+            line-height: 1.2;
+        }
+
+        .reward-card.mythic .reward-value {
+            color: #ffcc80;
+        }
+
+        .unwrap-section {
+            padding: 20px;
+            border-top: 1px solid #333;
+            background: #111;
+        }
+
+        .unwrap-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #0088cc, #00aaff);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .unwrap-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 136, 204, 0.4);
+        }
+
+        .unwrap-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .unwrap-btn.trial {
+            background: linear-gradient(135deg, #ff9800, #ffc107);
+            color: #000;
+        }
+
+        .unwrap-btn.trial:hover {
+            box-shadow: 0 8px 20px rgba(255, 152, 0, 0.4);
+        }
+
+        .price-icon {
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+        }
+
+        .trial-notice {
+            background: rgba(255, 152, 0, 0.2);
+            border: 1px solid #ff9800;
+            color: #ff9800;
+            padding: 12px;
+            border-radius: 10px;
+            font-size: 14px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .insufficient-funds {
+            display: none !important;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .case-tabs {
+                padding: 2px;
+            }
+            
+            .case-tab {
+                padding: 10px 15px;
+                font-size: 13px;
+            }
+
+            .reward-card {
+                min-width: 100px;
+                width: 100px;
+                height: 140px;
+            }
+
+            .reward-image {
+                width: 60px;
+                height: 60px;
+            }
+
+            .reward-value {
+                font-size: 12px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -640,281 +898,34 @@
         </div>
     </div>
 
-    <!-- ПРОДОЛЖЕНИЕ КОДА БУДЕТ ВО ВТОРОЙ ЧАСТИ -->
-<style>
-    /* Продолжение стилей для модалей и анимаций */
-    .bottom-sheet {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 2000;
-        justify-content: center;
-        align-items: flex-end;
-    }
-
-    .bottom-sheet.show {
-        display: flex;
-        animation: fadeIn 0.3s ease;
-    }
-
-    .bottom-sheet-content {
-        background: #000;
-        width: 100%;
-        max-height: 85vh;
-        border-radius: 20px 20px 0 0;
-        overflow: hidden;
-        transform: translateY(100%);
-        animation: slideUp 0.3s ease forwards;
-    }
-
-    .bottom-sheet-header {
-        padding: 20px;
-        border-bottom: 1px solid #333;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .bottom-sheet-title {
-        font-size: 20px;
-        font-weight: 700;
-        color: #fff;
-    }
-
-    .close-sheet-btn {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: #333;
-        border: none;
-        color: #fff;
-        font-size: 18px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .bottom-sheet-body {
-        padding: 20px;
-        max-height: 60vh;
-        overflow-y: auto;
-    }
-
-    /* Rewards Grid - Single Row */
-    .rewards-grid {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 20px;
-        overflow-x: auto;
-        padding: 10px 0;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-    }
-
-    .rewards-grid::-webkit-scrollbar {
-        display: none;
-    }
-
-    .reward-card {
-        min-width: 100px;
-        width: 100px;
-        height: 130px;
-        background: #111;
-        border-radius: 12px;
-        padding: 15px;
-        text-align: center;
-        position: relative;
-        border: 1px solid #222;
-        transition: all 0.3s ease;
-        flex-shrink: 0;
-    }
-
-    .reward-card.common,
-    .reward-card.rare,
-    .reward-card.epic,
-    .reward-card.legendary {
-        border-color: #222;
-        background: #111;
-    }
-
-    .reward-card.mythic {
-        border-color: #ff9800;
-        background: #111;
-        box-shadow: 0 0 15px rgba(255, 152, 0, 0.2);
-    }
-
-    .reward-percentage {
-        position: absolute;
-        top: 6px;
-        right: 6px;
-        background: rgba(0, 0, 0, 0.8);
-        color: #fff;
-        font-size: 10px;
-        font-weight: 600;
-        padding: 2px 5px;
-        border-radius: 8px;
-    }
-
-    .reward-card.mythic .reward-percentage {
-        background: rgba(255, 152, 0, 0.9);
-        color: #000;
-    }
-
-    .reward-icon {
-        font-size: 36px;
-        margin: 15px 0 10px 0;
-    }
-
-    .reward-value {
-        font-size: 14px;
-        font-weight: 600;
-        color: #ccc;
-        line-height: 1.2;
-    }
-
-    .reward-card.mythic .reward-value {
-        color: #ffcc80;
-    }
-
-    .unwrap-section {
-        padding: 20px;
-        border-top: 1px solid #333;
-        background: #111;
-    }
-
-    .unwrap-btn {
-        width: 100%;
-        background: linear-gradient(135deg, #0088cc, #00aaff);
-        color: white;
-        border: none;
-        padding: 16px;
-        border-radius: 25px;
-        font-size: 18px;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 10px;
-    }
-
-    .unwrap-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(0, 136, 204, 0.4);
-    }
-
-    .unwrap-btn:disabled {
-        background: #555;
-        cursor: not-allowed;
-        transform: none;
-        box-shadow: none;
-    }
-
-    .unwrap-btn.trial {
-        background: linear-gradient(135deg, #ff9800, #ffc107);
-        color: #000;
-    }
-
-    .unwrap-btn.trial:hover {
-        box-shadow: 0 8px 20px rgba(255, 152, 0, 0.4);
-    }
-
-    .price-icon {
-        width: 20px;
-        height: 20px;
-        background: #fff;
-        border-radius: 50%;
-    }
-
-    .trial-notice {
-        background: rgba(255, 152, 0, 0.2);
-        border: 1px solid #ff9800;
-        color: #ff9800;
-        padding: 12px;
-        border-radius: 10px;
-        font-size: 14px;
-        margin-bottom: 15px;
-        text-align: center;
-    }
-
-    .insufficient-funds {
-        display: none !important;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-
-    @keyframes slideUp {
-        from { transform: translateY(100%); }
-        to { transform: translateY(0); }
-    }
-
-    .hidden {
-        display: none;
-    }
-
-    @media (max-width: 480px) {
-        .case-tabs {
-            padding: 2px;
-        }
-        
-        .case-tab {
-            padding: 10px 15px;
-            font-size: 13px;
-        }
-
-        .reward-card {
-            min-width: 90px;
-            width: 90px;
-            height: 120px;
-        }
-
-        .reward-icon {
-            font-size: 32px;
-        }
-
-        .reward-value {
-            font-size: 13px;
-        }
-    }
-</style>
-
-<!-- Bottom Sheet Modal -->
-<div id="case-bottom-sheet" class="bottom-sheet">
-    <div class="bottom-sheet-content">
-        <div class="bottom-sheet-header">
-            <div class="bottom-sheet-title" id="sheet-title">Gift Box</div>
-            <button class="close-sheet-btn" onclick="closeCaseBottomSheet()">×</button>
-        </div>
-        
-        <div class="bottom-sheet-body">
-            <div id="trial-notice" class="trial-notice" style="display: none;">
-                This is a trial box! Prizes are not real and won't be added to your inventory.
+    <!-- Bottom Sheet Modal -->
+    <div id="case-bottom-sheet" class="bottom-sheet">
+        <div class="bottom-sheet-content">
+            <div class="bottom-sheet-header">
+                <div class="bottom-sheet-title" id="sheet-title">Gift Box</div>
+                <button class="close-sheet-btn" onclick="closeCaseBottomSheet()">×</button>
             </div>
+            
+            <div class="bottom-sheet-body">
+                <div id="trial-notice" class="trial-notice" style="display: none;">
+                    This is a trial box! Prizes are not real and won't be added to your inventory.
+                </div>
 
-            <div class="rewards-grid" id="rewards-grid">
-                <!-- Will be populated by JavaScript -->
+                <div class="rewards-grid" id="rewards-grid">
+                    <!-- Will be populated by JavaScript -->
+                </div>
             </div>
-        </div>
-        
-        <div class="unwrap-section">
-            <button class="unwrap-btn" id="unwrap-btn" onclick="startSpinWithWallet()">
-                <div class="price-icon"></div>
-                <span>Unwrap Gift for 300</span>
-            </button>
+            
+            <div class="unwrap-section">
+                <button class="unwrap-btn" id="unwrap-btn" onclick="startSpinWithWallet()">
+                    <div class="price-icon"></div>
+                    <span>Unwrap Gift for 300</span>
+                </button>
+            </div>
         </div>
     </div>
-</div>
 
-<script>
+    <script>
     // TON Connect initialization
     let tonConnectUI;
     let connectedWallet = null;
@@ -926,48 +937,48 @@
     let isTrialCase = false;
     let currentFilter = 'all';
 
-    // Case rewards data with rarities and percentages - only top 4-5 rewards per case
+    // Case rewards data with image URLs (замените YOUR_IMAGE_URL на ваши ссылки Imgur)
     const caseRewards = {
         'Trial Box': [
-            { icon: '🏆', value: '1 TON', rarity: 'common', percentage: '50%' },
-            { icon: '💎', value: '2 TON', rarity: 'common', percentage: '30%' },
-            { icon: '🌸', value: '3 TON', rarity: 'rare', percentage: '15%' },
-            { icon: '📦', value: '10 TON', rarity: 'mythic', percentage: '5%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL1.jpg', value: '1 TON', rarity: 'common', percentage: '50%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL2.jpg', value: '2 TON', rarity: 'common', percentage: '30%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL3.jpg', value: '3 TON', rarity: 'rare', percentage: '15%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL4.jpg', value: '10 TON', rarity: 'mythic', percentage: '5%' },
         ],
         'Sweet Box': [
-            { icon: '🏆', value: '10 TON', rarity: 'common', percentage: '40%' },
-            { icon: '💎', value: '15 TON', rarity: 'common', percentage: '30%' },
-            { icon: '🌸', value: '25 TON', rarity: 'rare', percentage: '20%' },
-            { icon: '📦', value: '50 TON', rarity: 'legendary', percentage: '8%' },
-            { icon: '👑', value: '100 TON', rarity: 'mythic', percentage: '2%' },
+            { imageUrl: 'https://i.imgur.com/NnKwyjf.jpg', value: '10 TON', rarity: 'common', percentage: '40%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL6.jpg', value: '15 TON', rarity: 'common', percentage: '30%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL7.jpg', value: '25 TON', rarity: 'rare', percentage: '20%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL8.jpg', value: '50 TON', rarity: 'legendary', percentage: '8%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL9.jpg', value: '100 TON', rarity: 'mythic', percentage: '2%' },
         ],
         'Star Box': [
-            { icon: '🏆', value: '25 TON', rarity: 'common', percentage: '35%' },
-            { icon: '💎', value: '35 TON', rarity: 'common', percentage: '25%' },
-            { icon: '🌸', value: '50 TON', rarity: 'rare', percentage: '20%' },
-            { icon: '💍', value: '75 TON', rarity: 'epic', percentage: '15%' },
-            { icon: '👑', value: '150 TON', rarity: 'mythic', percentage: '5%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL10.jpg', value: '25 TON', rarity: 'common', percentage: '35%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL11.jpg', value: '35 TON', rarity: 'common', percentage: '25%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL12.jpg', value: '50 TON', rarity: 'rare', percentage: '20%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL13.jpg', value: '75 TON', rarity: 'epic', percentage: '15%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL14.jpg', value: '150 TON', rarity: 'mythic', percentage: '5%' },
         ],
         'Golden Case': [
-            { icon: '🏆', value: '50 TON', rarity: 'common', percentage: '30%' },
-            { icon: '💎', value: '70 TON', rarity: 'common', percentage: '25%' },
-            { icon: '🌸', value: '100 TON', rarity: 'rare', percentage: '20%' },
-            { icon: '💍', value: '150 TON', rarity: 'epic', percentage: '15%' },
-            { icon: '👑', value: '300 TON', rarity: 'mythic', percentage: '10%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL15.jpg', value: '50 TON', rarity: 'common', percentage: '30%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL16.jpg', value: '70 TON', rarity: 'common', percentage: '25%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL17.jpg', value: '100 TON', rarity: 'rare', percentage: '20%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL18.jpg', value: '150 TON', rarity: 'epic', percentage: '15%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL19.jpg', value: '300 TON', rarity: 'mythic', percentage: '10%' },
         ],
         'Premium Box': [
-            { icon: '🏆', value: '80 TON', rarity: 'common', percentage: '25%' },
-            { icon: '💎', value: '120 TON', rarity: 'common', percentage: '25%' },
-            { icon: '🌸', value: '180 TON', rarity: 'rare', percentage: '20%' },
-            { icon: '💍', value: '250 TON', rarity: 'epic', percentage: '20%' },
-            { icon: '👑', value: '500 TON', rarity: 'mythic', percentage: '10%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL20.jpg', value: '80 TON', rarity: 'common', percentage: '25%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL21.jpg', value: '120 TON', rarity: 'common', percentage: '25%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL22.jpg', value: '180 TON', rarity: 'rare', percentage: '20%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL23.jpg', value: '250 TON', rarity: 'epic', percentage: '20%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL24.jpg', value: '500 TON', rarity: 'mythic', percentage: '10%' },
         ],
         'Diamond Case': [
-            { icon: '🏆', value: '150 TON', rarity: 'common', percentage: '20%' },
-            { icon: '💎', value: '200 TON', rarity: 'common', percentage: '20%' },
-            { icon: '🌸', value: '350 TON', rarity: 'rare', percentage: '20%' },
-            { icon: '💍', value: '500 TON', rarity: 'epic', percentage: '20%' },
-            { icon: '👑', value: '1000 TON', rarity: 'mythic', percentage: '20%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL25.jpg', value: '150 TON', rarity: 'common', percentage: '20%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL26.jpg', value: '200 TON', rarity: 'common', percentage: '20%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL27.jpg', value: '350 TON', rarity: 'rare', percentage: '20%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL28.jpg', value: '500 TON', rarity: 'epic', percentage: '20%' },
+            { imageUrl: 'https://i.imgur.com/YOUR_IMAGE_URL29.jpg', value: '1000 TON', rarity: 'mythic', percentage: '20%' },
         ]
     };
 
@@ -1089,7 +1100,7 @@
     // Filter cases
     function filterCases(category) {
         currentFilter = category;
-        
+
         // Update active tab
         document.querySelectorAll('.case-tab').forEach(tab => {
             tab.classList.remove('active');
@@ -1137,12 +1148,12 @@
         currentTab = tab;
     }
 
-    // Generate rewards HTML for bottom sheet
+    // Generate rewards HTML for bottom sheet with images
     function generateRewardsHTML(rewards) {
         return rewards.map(reward => `
             <div class="reward-card ${reward.rarity}">
                 <div class="reward-percentage">${reward.percentage}</div>
-                <div class="reward-icon">${reward.icon}</div>
+                <div class="reward-image" style="background-image: url('${reward.imageUrl}')"></div>
                 <div class="reward-value">${reward.value}</div>
             </div>
         `).join('');
@@ -1180,7 +1191,7 @@
             if (unwrapBtn) {
                 unwrapBtn.classList.remove('trial');
                 unwrapBtn.disabled = userBalance < currentCasePrice;
-                unwrapBtn.innerHTML = unwrapBtn.disabled ? 
+                unwrapBtn.innerHTML = unwrapBtn.disabled ?
                     '<span>Insufficient Funds</span>' :
                     `<div class="price-icon"></div><span>Unwrap Gift for ${currentCasePrice}</span>`;
             }
@@ -1233,7 +1244,7 @@
         const winner = rewards[Math.floor(Math.random() * rewards.length)];
 
         setTimeout(() => {
-            alert(`You won: ${winner.icon} ${winner.value}!`);
+            alert(`You won: ${winner.value}!`);
             isSpinning = false;
             closeCaseBottomSheet();
         }, 1000);
@@ -1303,5 +1314,3 @@
         }
     });
 </script>
-</body>
-</html>
